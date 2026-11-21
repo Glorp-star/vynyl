@@ -1,29 +1,32 @@
 .vynyl-sidebar-button {
   width: calc(100% - 16px);
-  min-height: 42px;
+  min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   margin: 4px 8px;
-  padding: 0 11px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   background: transparent;
   color: #b3b3b3;
-  font: 500 13px/1 "SpotifyMixUI", "Helvetica Neue", sans-serif;
+  font: 550 13px/1 "SpotifyMixUI", "Helvetica Neue", sans-serif;
   text-align: left;
   cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
 }
-.vynyl-sidebar-button:hover { background: rgba(255,255,255,.08); color: #fff; }
+.vynyl-sidebar-button:hover { background: rgba(183,165,255,.13); color: #f7f2ff; }
 .vynyl-sidebar-icon {
   width: 23px;
   height: 23px;
   display: grid;
   flex: 0 0 auto;
   place-items: center;
-  border: 1.5px solid currentColor;
+  border: 1px solid rgba(188,170,255,.55);
   border-radius: 50%;
-  font: 700 11px/1 sans-serif;
+  background: linear-gradient(145deg, #c0adff, #8b75c7);
+  color: #20192d;
+  font: 750 11px/1 sans-serif;
 }
 
 .vynyl-panel {
@@ -31,7 +34,9 @@
   inset: 0;
   z-index: 2147483000;
   overflow: auto;
-  background: var(--vynyl-main, #121212);
+  background:
+    radial-gradient(ellipse at 86% 0%, color-mix(in srgb, var(--vynyl-accent, #b8a7ff) 10%, transparent), transparent 38%),
+    var(--vynyl-main, #15141c);
   color: var(--vynyl-text, #fff);
   font-family: "SpotifyMixUI", "Helvetica Neue", sans-serif;
   isolation: isolate;
@@ -56,8 +61,8 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: #ffb38a;
-  color: #211813;
+  background: linear-gradient(145deg, #c0adff, #f58b77);
+  color: #211b2c;
   font-size: 15px;
   font-weight: 800;
 }
@@ -72,8 +77,9 @@
 }
 .vynyl-heading h1 {
   margin: 0;
-  font-size: clamp(29px, 4vw, 44px);
-  letter-spacing: -.05em;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 650;
+  letter-spacing: -.055em;
   line-height: 1.05;
 }
 .vynyl-header-actions { display: flex; align-items: center; gap: 9px; }
@@ -116,7 +122,7 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  min-height: 52px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -128,17 +134,17 @@
   backdrop-filter: blur(18px);
 }
 .vynyl-tabs button {
-  min-height: 34px;
-  padding: 0 15px;
+  min-height: 36px;
+  padding: 0 16px;
   border: 0;
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
   color: var(--vynyl-text, #fff);
   font: 500 13px/1 "SpotifyMixUI", "Helvetica Neue", sans-serif;
   cursor: pointer;
 }
 .vynyl-tabs button:hover { background: rgba(255,255,255,.09); }
-.vynyl-tabs button.is-active { background: #ffb38a; color: #211813; }
+.vynyl-tabs button.is-active { background: var(--vynyl-accent, #b8a7ff); color: var(--vynyl-main, #15141c); }
 .vynyl-content { max-width: 1240px; margin: 0 auto; }
 .vynyl-section-head {
   display: flex;
@@ -157,28 +163,30 @@
 }
 .vynyl-theme-card {
   min-width: 0;
-  padding: 7px;
+  padding: 8px;
   border: 1px solid rgba(255,255,255,.12);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--vynyl-card, #242424) 56%, transparent);
+  border-radius: 7px;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--vynyl-card, #242424) 70%, transparent), rgba(16,15,20,.62));
   color: var(--vynyl-text, #fff);
   text-align: left;
   cursor: pointer;
-  transition: border-color 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
-.vynyl-theme-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.3); }
-.vynyl-theme-card.is-selected { border-color: var(--vynyl-accent, #ffb38a); box-shadow: 0 0 0 1px var(--vynyl-accent, #ffb38a); }
+.vynyl-theme-card:hover { transform: translateY(-2px); border-color: rgba(203,190,255,.52); }
+.vynyl-theme-card.is-selected { border-color: var(--vynyl-accent, #b8a7ff); box-shadow: 0 0 0 1px var(--vynyl-accent, #b8a7ff); }
 .vynyl-theme-card:focus-visible,
+.vynyl-sidebar-button:focus-visible,
 .vynyl-tabs button:focus-visible,
 .vynyl-close:focus-visible,
 .vynyl-toggle:focus-visible,
-.vynyl-small-button:focus-visible { outline: 2px solid var(--vynyl-accent, #ffb38a); outline-offset: 3px; }
+.vynyl-small-button:focus-visible,
+.vynyl-wallpaper-url:focus-visible { outline: 2px solid var(--vynyl-accent, #b8a7ff); outline-offset: 3px; }
 .vynyl-theme-art {
   position: relative;
-  height: 124px;
+  height: 132px;
   display: block;
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--vynyl-swatch-main);
   isolation: isolate;
 }
@@ -186,15 +194,18 @@
   content: "";
   position: absolute;
   inset: -20%;
-  background: radial-gradient(ellipse at 70% 22%, color-mix(in srgb, var(--vynyl-swatch-accent) 48%, transparent), transparent 40%),
-    radial-gradient(ellipse at 86% 100%, rgba(255,255,255,.18), transparent 42%);
+  background: radial-gradient(ellipse at 70% 22%, color-mix(in srgb, var(--vynyl-swatch-accent) 55%, transparent), transparent 40%),
+    radial-gradient(ellipse at 20% 100%, color-mix(in srgb, var(--vynyl-swatch-side) 70%, transparent), transparent 42%);
 }
+.vynyl-theme-art.is-vinyl::before { background: repeating-radial-gradient(circle at 72% 54%, transparent 0 8px, rgba(255,255,255,.09) 9px 10px), radial-gradient(circle at 72% 54%, var(--vynyl-swatch-accent), transparent 48%); }
+.vynyl-theme-art.is-prism::before { background: conic-gradient(from 25deg at 70% 48%, transparent, color-mix(in srgb, var(--vynyl-swatch-accent) 76%, transparent), transparent 34%, color-mix(in srgb, var(--vynyl-swatch-side) 75%, transparent), transparent 72%); filter: blur(4px); }
+.vynyl-theme-art.is-grain::before { background: linear-gradient(135deg, transparent 20%, color-mix(in srgb, var(--vynyl-swatch-accent) 45%, transparent)), repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 5px); }
 .vynyl-theme-art.is-aurora::before { animation: vynyl-card-aurora 9s ease-in-out infinite alternate; }
 .vynyl-theme-art.is-orbit::before {
   background: radial-gradient(circle at 72% 45%, color-mix(in srgb, var(--vynyl-swatch-accent) 55%, transparent), transparent 40%);
   animation: vynyl-card-orbit 13s linear infinite;
 }
-.vynyl-theme-art.is-glass { background-image: linear-gradient(130deg, rgba(255,255,255,.16), transparent 52%); }
+.vynyl-theme-art.is-glass { background-image: linear-gradient(130deg, rgba(255,255,255,.2), transparent 44%, rgba(123,160,255,.12)); }
 .vynyl-theme-side { position: absolute; inset: 0 auto 0 0; z-index: 1; width: 23%; background: var(--vynyl-swatch-side); }
 .vynyl-theme-accent { position: absolute; top: 21px; left: 34%; z-index: 1; width: 40%; height: 9px; border-radius: 3px; background: var(--vynyl-swatch-accent); }
 .vynyl-theme-lines {
@@ -222,7 +233,7 @@
   backdrop-filter: blur(9px);
 }
 .vynyl-theme-info {
-  min-height: 57px;
+  min-height: 62px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -232,7 +243,10 @@
 .vynyl-theme-info > span:first-child { display: flex; flex-direction: column; gap: 4px; }
 .vynyl-theme-info strong { font-size: 12px; font-weight: 600; }
 .vynyl-theme-info small { color: var(--vynyl-subtext, #aaa); font-size: 10px; }
-.vynyl-selected-mark { width: 21px; height: 21px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; background: var(--vynyl-accent); color: var(--vynyl-main); font-size: 12px; font-weight: 700; }
+.vynyl-selected-mark { width: 21px; height: 21px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; background: var(--vynyl-accent, #b8a7ff); color: var(--vynyl-main, #15141c); font-size: 12px; font-weight: 700; }
+.vynyl-theme-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 15px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.1); border-bottom: 1px solid rgba(255,255,255,.1); color: var(--vynyl-subtext, #aaa); font-size: 11px; }
+.vynyl-restore-theme { min-height: 30px; background: transparent; color: var(--vynyl-text, #fff); border: 1px solid rgba(255,255,255,.18); }
+.vynyl-restore-theme:hover { border-color: var(--vynyl-accent); }
 .vynyl-customizer {
   display: flex;
   justify-content: space-between;
@@ -266,7 +280,7 @@
   padding: 0 12px;
   border: 0;
   border-radius: 4px;
-  background: var(--vynyl-accent, #ffb38a);
+  background: var(--vynyl-accent, #b8a7ff);
   color: var(--vynyl-main, #121212);
   font: 600 11px "SpotifyMixUI", "Helvetica Neue", sans-serif;
   cursor: pointer;
@@ -280,8 +294,8 @@
   gap: 12px;
   padding: 12px;
   border: 1px solid rgba(255,255,255,.12);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--vynyl-card, #242424) 52%, transparent);
+  border-radius: 7px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--vynyl-card, #242424) 72%, transparent), rgba(17,16,22,.58));
   color: var(--vynyl-text, #fff);
 }
 .vynyl-feature-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 4px; background: color-mix(in srgb, var(--vynyl-accent, #ffb38a) 18%, transparent); color: var(--vynyl-accent, #ffb38a); font-size: 21px; }
@@ -299,6 +313,9 @@
 .vynyl-empty { min-height: 220px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; color: var(--vynyl-subtext, #aaa); text-align: center; }
 .vynyl-empty strong { color: var(--vynyl-text, #fff); font-size: 16px; }
 .vynyl-empty span { font-size: 11px; }
+.vynyl-catalog-note { margin: 17px 0 0; color: var(--vynyl-subtext, #aaa); font-size: 10px; line-height: 1.5; }
+.vynyl-ad-shield [data-vynyl-promo-hidden="true"],
+html.vynyl-ad-shield #advertiser-info { display: none !important; }
 .vynyl-toast {
   position: fixed;
   left: 50%;
@@ -351,9 +368,8 @@ html[data-vynyl-glass="true"] .main-view-container__scroll-node { background-col
 html[data-vynyl-motion="aurora"] .main-view-container,
 html[data-vynyl-motion="orbit"] .main-view-container,
 html[data-vynyl-wallpaper="true"] .main-view-container { background-color: color-mix(in srgb, var(--vynyl-main, #121212) 70%, transparent) !important; }
-html.vynyl-focus .Root__left-sidebar,
+html.vynyl-focus [data-testid="left-sidebar-footer"],
 html.vynyl-focus .Root__right-sidebar { display: none !important; }
-html.vynyl-focus .Root__main-view { grid-column: 1 / -1 !important; }
 html.vynyl-round-art [data-testid="cover-art-image"],
 html.vynyl-round-art .cover-art-image img { border-radius: 50% !important; }
 html.vynyl-pill-progress [role="progressbar"],
@@ -364,10 +380,6 @@ html.vynyl-hide-podcast [data-testid*="podcast"],
 html.vynyl-hide-podcast section[aria-label*="podcast" i] { display: none !important; }
 html.vynyl-soft-cards [data-testid="card"],
 html.vynyl-soft-cards .main-card-card { box-shadow: 0 10px 28px rgba(0,0,0,.18); }
-html[data-vynyl-motion="aurora"] .main-view-container,
-html[data-vynyl-motion="orbit"] .main-view-container,
-html[data-vynyl-wallpaper="true"] .main-view-container { background-color: color-mix(in srgb,var(--vynyl-main,#121212) 70%,transparent) !important; }
-
 @keyframes vynyl-aurora { from { transform: translate3d(-2%,-1%,0) rotate(-4deg) scale(.96); } to { transform: translate3d(3%,2%,0) rotate(5deg) scale(1.08); } }
 @keyframes vynyl-card-aurora { from { transform: translate(-4%,0) rotate(-5deg) scale(.96); } to { transform: translate(4%,3%) rotate(5deg) scale(1.08); } }
 @keyframes vynyl-card-orbit { from { transform: rotate(0) scale(.8); } to { transform: rotate(360deg) scale(1.16); } }

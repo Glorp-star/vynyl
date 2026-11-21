@@ -1,6 +1,5 @@
 (() => {
   if (window.__vynylStarted) return;
-  window.__vynylStarted = true;
 
   const palette = (main, sidebar, player, card, text, subtext, accent) => ({
     "--vynyl-main": main,
@@ -32,26 +31,34 @@
   });
 
   const themes = [
-    { id: "peach", name: "Peach Static", note: "Warm low-light tones", colors: palette("#171512", "#241f1b", "#211e19", "#2d2924", "#fff8ef", "#c9bfb4", "#ffb38a") },
-    { id: "verdant", name: "Verdant", note: "Quiet botanical green", colors: palette("#101713", "#17231d", "#18241e", "#22332a", "#f1f7e8", "#aebdad", "#b6ef73") },
-    { id: "ultramarine", name: "Ultramarine", note: "Deep cobalt midnight", colors: palette("#0d1020", "#171a29", "#161a2a", "#252a40", "#f3f5ff", "#adb4ca", "#82aaff") },
-    { id: "paper", name: "Paper Cut", note: "Editorial warm paper", colors: palette("#f4efe4", "#e9e3d7", "#ded6c6", "#fbf8f0", "#1c1b18", "#656158", "#df4d43") },
-    { id: "violet", name: "Violet Hour", note: "Soft plum and lilac", colors: palette("#17121c", "#211927", "#211a28", "#30263a", "#f7efff", "#c2b4ca", "#d0a6ff") },
-    { id: "afterglow", name: "Afterglow", note: "Rose at blue hour", colors: palette("#1b1319", "#281b23", "#241921", "#38252f", "#fff0f4", "#cbb3bf", "#ff87ad") },
-    { id: "glacier", name: "Glacier", note: "Cool air, clear blue", colors: palette("#11191e", "#19242b", "#19252c", "#253640", "#eff9ff", "#aec3ce", "#7edcff") },
-    { id: "citrus", name: "Citrus Club", note: "Electric lime and ink", colors: palette("#15180e", "#202515", "#1d2214", "#303921", "#f7ffe9", "#bac6a3", "#d3f66b") },
-    { id: "ember", name: "Ember Room", note: "Burnt orange, soft black", colors: palette("#1b1411", "#2a1d17", "#261b16", "#3b2820", "#fff4ea", "#d0b8a8", "#ff8c54") },
-    { id: "mono", name: "Monochrome", note: "A quieter kind of contrast", colors: palette("#151515", "#202020", "#1e1e1e", "#2c2c2c", "#f5f5f5", "#b0b0b0", "#e5e5e5") },
-    { id: "aurora", name: "Aurora Drift", note: "Slow-moving northern lights", motion: "aurora", colors: palette("#101722", "#182333", "#17212f", "#243244", "#f1f7ff", "#afbed1", "#9bd7d1") },
-    { id: "orbit", name: "Orbit", note: "A little motion in the dark", motion: "orbit", colors: palette("#141321", "#1d1b2c", "#1c1a29", "#2b283c", "#f8f4ff", "#bdb5ce", "#b9a2ff") },
-    { id: "liquid", name: "Liquid Glass", note: "Translucent, blurred surfaces", glass: true, colors: palette("#151920", "#1c222b", "#1b2028", "#242a34", "#f4f7ff", "#b3bdcc", "#a4c7ff") }
+    { id: "peach", name: "Peach Static", note: "Analog warmth with a bright edge", texture: "vinyl", colors: palette("#191519", "#282027", "#241d24", "#352a33", "#fff4ed", "#cbb9b4", "#ff9d83") },
+    { id: "verdant", name: "Verdant", note: "Deep green, soft chartreuse", colors: palette("#101713", "#19251e", "#1a251e", "#26372b", "#f1f7e8", "#aebdad", "#c1ed77") },
+    { id: "ultramarine", name: "Ultramarine", note: "Cobalt light over midnight", texture: "prism", colors: palette("#101326", "#1a1e35", "#1c203a", "#2a2e4a", "#f3f5ff", "#adb4ca", "#8ba6ff") },
+    { id: "paper", name: "Paper Stereo", note: "Warm paper and signal red", texture: "grain", colors: palette("#f1ede4", "#e6e0d5", "#ddd6c9", "#faf7ef", "#211e1a", "#68635d", "#d95146") },
+    { id: "violet", name: "Velvet Signal", note: "Plum shadows and electric lilac", colors: palette("#17131f", "#211b2c", "#211c2c", "#30283e", "#f7f2ff", "#c2b7d0", "#b8a3ff") },
+    { id: "afterglow", name: "Afterglow", note: "Rose lights after midnight", colors: palette("#1c141b", "#2b1d29", "#281c27", "#3b2837", "#fff0f5", "#ccb4c2", "#ff8dbc") },
+    { id: "glacier", name: "Cold Bloom", note: "Ice blue with a mint pulse", colors: palette("#10191f", "#19272e", "#1a2930", "#263b44", "#eff9ff", "#aec3ce", "#83e1d3") },
+    { id: "citrus", name: "Citrus Tape", note: "Olive shadow, citrus signal", colors: palette("#17180f", "#252516", "#252417", "#36371f", "#f8f8e9", "#c2c29f", "#e0e46a") },
+    { id: "ember", name: "Cinder Room", note: "Low light and warm metal", colors: palette("#1a1413", "#2a1e1b", "#291e1a", "#3b2b26", "#fff3eb", "#ceb7aa", "#f58e69") },
+    { id: "mono", name: "Mono Chrome", note: "Silver detail, no noise", texture: "grain", colors: palette("#17181b", "#222327", "#24252a", "#32343a", "#f3f3f5", "#b3b4ba", "#e3d9c9") },
+    { id: "aurora", name: "Aurora Drift", note: "Slow northern light motion", motion: "aurora", colors: palette("#111925", "#1a2636", "#192637", "#27384b", "#f1f7ff", "#afbed1", "#9bd7d1") },
+    { id: "orbit", name: "Orbit", note: "A moving light in deep space", motion: "orbit", colors: palette("#151322", "#201d31", "#201d30", "#302b43", "#f8f4ff", "#bdb5ce", "#c1a5ff") },
+    { id: "liquid", name: "Liquid Glass", note: "Blurred surfaces and cool light", glass: true, colors: palette("#151920", "#1d242d", "#1c232b", "#29313c", "#f4f7ff", "#b3bdcc", "#9bcaff") },
+    { id: "midnight", name: "Midnight FM", note: "Indigo ink and a radio-blue glow", colors: palette("#10131e", "#171e2d", "#18202e", "#232e41", "#eef4ff", "#a9b5c9", "#73c7e8") },
+    { id: "rose", name: "Cherry Chrome", note: "Black cherry with polished rose", colors: palette("#1c1118", "#291923", "#2b1b26", "#3b2734", "#fff0f6", "#d1b6c3", "#ff7fae") },
+    { id: "juniper", name: "Juniper Club", note: "Forest shade and pale jade", colors: palette("#111916", "#19241f", "#192720", "#26362e", "#edf8f1", "#aebeb5", "#8de0bb") },
+    { id: "sunset", name: "Sunset Circuit", note: "Blue hour meets warm neon", texture: "prism", colors: palette("#191522", "#241d31", "#282035", "#392941", "#fbf1ff", "#c5b7d1", "#ff966f") },
+    { id: "poolside", name: "Poolside", note: "A clean turquoise afternoon", colors: palette("#101b20", "#18292e", "#1b2d31", "#284046", "#effcfa", "#b3c9c7", "#78e1d1") },
+    { id: "lavender", name: "Lavender Haze", note: "Soft lilac, deep violet", colors: palette("#171421", "#211d30", "#221f31", "#302c43", "#f6f1ff", "#c0b9d1", "#bea5f5") },
+    { id: "golden", name: "Golden Hour", note: "Amber light on dark walnut", texture: "vinyl", colors: palette("#1c1711", "#2a2117", "#2d2418", "#3b3020", "#fff6e8", "#c9bba5", "#f3bd68") }
   ];
 
   const extensions = [
-    { id: "track-toast", name: "Now playing toast", note: "A quiet toast when the track changes.", category: "Listening", icon: "♫" },
-    { id: "shortcuts", name: "Quick keys", note: "Alt + Shift + P / N / B for playback.", category: "Controls", icon: "⌘" },
-    { id: "focus", name: "Focus mode", note: "Hide Spotify side panels while you listen.", category: "Layout", icon: "◫" },
-    { id: "ambient", name: "Artwork glow", note: "Let the current album color wash the player.", category: "Visuals", icon: "◉" }
+    { id: "ad-shield", name: "Ad Shield", note: "Hide sponsored cards and promo panels. Audio ads are unchanged.", category: "Listening", icon: "⛨" },
+    { id: "track-toast", name: "Now playing", note: "See a small toast when the track changes.", category: "Listening", icon: "♫" },
+    { id: "shortcuts", name: "Playback keys", note: "Alt + Shift + P / N / B for playback.", category: "Controls", icon: "⌘" },
+    { id: "focus", name: "Focus mode", note: "Hide the sidebar footer and right panel.", category: "Layout", icon: "◫" },
+    { id: "ambient", name: "Artwork glow", note: "Let the current cover tint the player.", category: "Visuals", icon: "◉" }
   ];
 
   const snippets = [
@@ -69,6 +76,8 @@
   ];
 
   const root = document.documentElement;
+  const themeProperties = Object.keys(themes[0].colors);
+  const originalThemeStyles = new Map(themeProperties.map((name) => [name, root.style.getPropertyValue(name)]));
   const readList = (key) => {
     try {
       const value = JSON.parse(localStorage.getItem("vynyl:" + key) || "[]");
@@ -89,6 +98,25 @@
     localStorage.setItem("vynyl:theme", theme.id);
     root.dataset.vynylMotion = theme.motion || "none";
     root.dataset.vynylGlass = String(Boolean(theme.glass));
+    const customAccent = localStorage.getItem("vynyl:custom-color") || "";
+    if (/^#[0-9a-f]{6}$/i.test(customAccent)) applyAccent(customAccent);
+  };
+
+  const applyAccent = (color) => {
+    for (const name of ["--vynyl-accent", "--text-bright-accent", "--text-positive", "--essential-base", "--essential-bright-accent", "--decorative-base", "--decorative-bright-accent"]) {
+      root.style.setProperty(name, color);
+    }
+  };
+
+  const restoreTheme = () => {
+    for (const [name, value] of originalThemeStyles) {
+      if (value) root.style.setProperty(name, value);
+      else root.style.removeProperty(name);
+    }
+    localStorage.removeItem("vynyl:theme");
+    localStorage.removeItem("vynyl:custom-color");
+    delete root.dataset.vynylMotion;
+    delete root.dataset.vynylGlass;
   };
 
   const showToast = (message) => {
@@ -108,13 +136,45 @@
   const refreshEffects = () => {
     const activeExtensions = readList("extensions");
     const activeSnippets = readList("snippets");
+    const adShieldEnabled = activeExtensions.includes("ad-shield");
+    const adShieldWasEnabled = root.classList.contains("vynyl-ad-shield");
+    root.classList.toggle("vynyl-ad-shield", adShieldEnabled);
     root.classList.toggle("vynyl-focus", activeExtensions.includes("focus"));
     root.classList.toggle("vynyl-ambient", activeExtensions.includes("ambient"));
     root.classList.toggle("vynyl-round-art", activeSnippets.includes("round-art"));
     root.classList.toggle("vynyl-pill-progress", activeSnippets.includes("pill-progress"));
     root.classList.toggle("vynyl-hide-podcast", activeSnippets.includes("hide-podcast"));
     root.classList.toggle("vynyl-soft-cards", activeSnippets.includes("soft-cards"));
+    if (adShieldEnabled) markSponsoredContent();
+    else if (adShieldWasEnabled) document.querySelectorAll("[data-vynyl-promo-hidden]").forEach((node) => node.removeAttribute("data-vynyl-promo-hidden"));
     applyWallpaper();
+  };
+
+  const markSponsoredContent = () => {
+    if (!root.classList.contains("vynyl-ad-shield")) return;
+
+    const selectors = [
+      "#advertiser-info",
+      '[data-testid*="sponsor" i]',
+      '[data-testid*="ad-" i]',
+      '[aria-label="Advertisement" i]',
+      '[aria-label^="Sponsored" i]',
+      '[data-testid="PanelHeader_AdContextMenuButton"]'
+    ];
+    const candidates = new Set(selectors.flatMap((selector) => [...document.querySelectorAll(selector)]));
+    for (const heading of document.querySelectorAll("h1, h2, h3")) {
+      if (/^(sponsored playlists?|sponsored content|advertisement)$/i.test(heading.textContent.trim())) candidates.add(heading);
+    }
+
+    for (const node of candidates) {
+      if (node.closest(".vynyl-panel")) continue;
+      let container = node.closest("article, section, [data-testid*='sponsor' i], [data-testid*='ad-' i]");
+      if (!container && node.id === "advertiser-info") container = node;
+      if (!container && /^(sponsored playlists?|sponsored content)$/i.test(node.textContent.trim())) {
+        container = node.closest("section") || node.parentElement?.parentElement;
+      }
+      if (container && !container.closest(".vynyl-panel")) container.setAttribute("data-vynyl-promo-hidden", "true");
+    }
   };
 
   const applyWallpaper = () => {
@@ -154,10 +214,11 @@
   let activeTab = "Themes";
   let search = "";
   let panel;
+  let panelReturnFocus;
 
   const renderTheme = (theme, selected) => `
     <button class="vynyl-theme-card${selected ? " is-selected" : ""}" data-theme="${theme.id}" aria-pressed="${selected}">
-      <span class="vynyl-theme-art${theme.motion ? " is-" + theme.motion : ""}${theme.glass ? " is-glass" : ""}" style="--vynyl-swatch-main:${theme.colors["--vynyl-main"]};--vynyl-swatch-side:${theme.colors["--vynyl-sidebar"]};--vynyl-swatch-accent:${theme.colors["--vynyl-accent"]}">
+      <span class="vynyl-theme-art${theme.motion ? " is-" + theme.motion : ""}${theme.glass ? " is-glass" : ""}${theme.texture ? " is-" + theme.texture : ""}" style="--vynyl-swatch-main:${theme.colors["--vynyl-main"]};--vynyl-swatch-side:${theme.colors["--vynyl-sidebar"]};--vynyl-swatch-accent:${theme.colors["--vynyl-accent"]}">
         <span class="vynyl-theme-side"></span><span class="vynyl-theme-accent"></span><span class="vynyl-theme-lines"></span>
         ${theme.motion ? '<span class="vynyl-motion-tag">Motion</span>' : ""}
         ${theme.glass ? '<span class="vynyl-motion-tag">Glass</span>' : ""}
@@ -177,31 +238,38 @@
     const content = panel.querySelector(".vynyl-content");
     const activeExtensions = readList("extensions");
     const activeSnippets = readList("snippets");
-    const matches = (item) => (item.name + " " + item.note).toLowerCase().includes(search.toLowerCase());
+    const matches = (item) => [item.name, item.note, item.category].join(" ").toLowerCase().includes(search.toLowerCase());
+    const emptyState = '<div class="vynyl-empty"><strong>No matches</strong><span>Try another search or clear the search field.</span></div>';
     if (activeTab === "Themes") {
-      const current = localStorage.getItem("vynyl:theme") || "peach";
+      const current = localStorage.getItem("vynyl:theme") || "";
+      const filteredThemes = themes.filter(matches);
+      const savedColor = localStorage.getItem("vynyl:custom-color") || "#b8a2ff";
       content.innerHTML = `
-        <div class="vynyl-section-head"><div><small>Curated for your player</small><h2>Pick a new atmosphere</h2></div><span>${themes.filter(matches).length} looks</span></div>
-        <div class="vynyl-theme-grid">${themes.filter(matches).map((theme) => renderTheme(theme, theme.id === current)).join("")}</div>
+        <div class="vynyl-section-head"><div><small>20 palettes, built for long listening</small><h2>Set the room tone.</h2></div><span>${filteredThemes.length} themes</span></div>
+        ${filteredThemes.length ? `<div class="vynyl-theme-grid">${filteredThemes.map((theme) => renderTheme(theme, theme.id === current)).join("")}</div>` : emptyState}
+        <div class="vynyl-theme-actions"><span>${current ? `Using ${themes.find((theme) => theme.id === current)?.name || "a custom look"}` : "Using Spotify's original look"}</span><button class="vynyl-small-button vynyl-restore-theme" data-action="restore-theme">Restore Spotify look</button></div>
         <section class="vynyl-customizer">
-          <div><small>Make it yours</small><h2>Your own background</h2><p>Choose an accent or use an HTTPS image link you have permission to use.</p></div>
+          <div><small>Personal touches</small><h2>Accent and background</h2><p>Use your own accent color or an HTTPS image you have permission to use.</p></div>
           <div class="vynyl-customizer-controls">
-            <label class="vynyl-color-control">Accent <input class="vynyl-color" type="color" value="${localStorage.getItem("vynyl:custom-color") || "#b8a2ff"}" aria-label="Choose a custom accent"></label>
+            <label class="vynyl-color-control">Accent <input class="vynyl-color" type="color" value="${escapeHtml(savedColor)}" aria-label="Choose a custom accent"></label>
             <div class="vynyl-wallpaper"><input class="vynyl-wallpaper-url" type="url" placeholder="https://… image URL" value="${escapeHtml(localStorage.getItem("vynyl:wallpaper") || "")}"><button class="vynyl-small-button" data-action="wallpaper">Apply</button></div>
           </div>
         </section>`;
     } else if (activeTab === "Extensions") {
-      content.innerHTML = `<div class="vynyl-section-head"><div><small>Small upgrades, big difference</small><h2>Extensions</h2></div></div><div class="vynyl-feature-grid">${extensions.filter(matches).map((item) => renderFeature(item, "extensions", activeExtensions.includes(item.id))).join("")}</div>`;
+      const filteredExtensions = extensions.filter(matches);
+      content.innerHTML = `<div class="vynyl-section-head"><div><small>Playback, layout, and listening controls</small><h2>Extensions</h2></div><span>${activeExtensions.length} enabled</span></div>${filteredExtensions.length ? `<div class="vynyl-feature-grid">${filteredExtensions.map((item) => renderFeature(item, "extensions", activeExtensions.includes(item.id))).join("")}</div>` : emptyState}<p class="vynyl-catalog-note">Ad Shield hides sponsored cards and promo panels only. It does not skip audio ads or block network requests.</p>`;
     } else if (activeTab === "Snippets") {
-      content.innerHTML = `<div class="vynyl-section-head"><div><small>Details make the vibe</small><h2>Snippets</h2></div></div><div class="vynyl-feature-grid">${snippets.filter(matches).map((item) => renderFeature(item, "snippets", activeSnippets.includes(item.id))).join("")}</div>`;
+      const filteredSnippets = snippets.filter(matches);
+      content.innerHTML = `<div class="vynyl-section-head"><div><small>Small changes to the surfaces you use</small><h2>Snippets</h2></div><span>${activeSnippets.length} enabled</span></div>${filteredSnippets.length ? `<div class="vynyl-feature-grid">${filteredSnippets.map((item) => renderFeature(item, "snippets", activeSnippets.includes(item.id))).join("")}</div>` : emptyState}`;
     } else if (activeTab === "Apps") {
-      content.innerHTML = `<div class="vynyl-section-head"><div><small>Your Spotify shortcuts</small><h2>Apps</h2></div></div><div class="vynyl-feature-grid">${destinations.filter(matches).map((item) => `<article class="vynyl-feature-card"><span class="vynyl-feature-icon">${item.icon}</span><span class="vynyl-feature-copy"><small>Spotify destination</small><strong>${item.name}</strong><span>${item.note}</span></span><button class="vynyl-small-button" data-destination="${item.id}">Open</button></article>`).join("")}</div>`;
+      const filteredDestinations = destinations.filter(matches);
+      content.innerHTML = `<div class="vynyl-section-head"><div><small>Jump straight to a Spotify destination</small><h2>Quick links</h2></div></div>${filteredDestinations.length ? `<div class="vynyl-feature-grid">${filteredDestinations.map((item) => `<article class="vynyl-feature-card"><span class="vynyl-feature-icon">${item.icon}</span><span class="vynyl-feature-copy"><small>Spotify destination</small><strong>${item.name}</strong><span>${item.note}</span></span><button class="vynyl-small-button" data-destination="${item.id}">Open</button></article>`).join("")}</div>` : emptyState}`;
     } else {
-      const current = themes.find((theme) => theme.id === localStorage.getItem("vynyl:theme")) || themes[0];
+      const current = themes.find((theme) => theme.id === localStorage.getItem("vynyl:theme"));
       const enabledExtensions = extensions.filter((item) => activeExtensions.includes(item.id));
       const enabledSnippets = snippets.filter((item) => activeSnippets.includes(item.id));
       const items = [...enabledExtensions.map((item) => renderFeature(item, "extensions", true)), ...enabledSnippets.map((item) => renderFeature(item, "snippets", true))];
-      content.innerHTML = `<div class="vynyl-section-head"><div><small>Your setup</small><h2>Installed</h2></div></div><div class="vynyl-current-theme"><small>Active theme</small><strong>${current.name}</strong><span>Applied in Spotify</span></div>${items.length ? `<div class="vynyl-feature-grid">${items.join("")}</div>` : '<div class="vynyl-empty"><strong>A fresh start</strong><span>Enable an extension or snippet and it will appear here.</span></div>'}`;
+      content.innerHTML = `<div class="vynyl-section-head"><div><small>Your current Vynyl setup</small><h2>Installed</h2></div></div><div class="vynyl-current-theme"><small>Active theme</small><strong>${current?.name || "Spotify original"}</strong><span>${current ? "Applied in Spotify" : "No Vynyl theme is overriding Spotify"}</span></div>${items.length ? `<div class="vynyl-feature-grid">${items.join("")}</div>` : '<div class="vynyl-empty"><strong>Nothing switched on</strong><span>Pick a theme or enable an extension to shape your player.</span></div>'}`;
     }
   };
 
@@ -209,11 +277,13 @@
     if (panel) return;
     panel = document.createElement("section");
     panel.className = "vynyl-panel";
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", "true");
     panel.setAttribute("aria-label", "Vynyl customization");
     panel.innerHTML = `
       <div class="vynyl-panel-shell">
         <header class="vynyl-header">
-          <div class="vynyl-heading"><span class="vynyl-mark">V</span><div><small>Your Spotify, remixed</small><h1>Make it yours.</h1></div></div>
+          <div class="vynyl-heading"><span class="vynyl-mark"><span>V</span></span><div><small>Your Spotify, remixed</small><h1>Set your frequency.</h1></div></div>
           <div class="vynyl-header-actions"><label class="vynyl-search"><span>⌕</span><input type="search" placeholder="Find a look or feature" aria-label="Search Vynyl"></label><button class="vynyl-close" aria-label="Close Vynyl">×</button></div>
         </header>
         <nav class="vynyl-tabs" aria-label="Vynyl categories"></nav>
@@ -237,20 +307,19 @@
       if (!event.target.matches(".vynyl-color")) return;
       const color = event.target.value;
       localStorage.setItem("vynyl:custom-color", color);
-      root.style.setProperty("--vynyl-accent", color);
-      root.style.setProperty("--text-bright-accent", color);
-      root.style.setProperty("--text-positive", color);
-      root.style.setProperty("--essential-base", color);
-      root.style.setProperty("--essential-bright-accent", color);
-      root.style.setProperty("--decorative-base", color);
-      root.style.setProperty("--decorative-bright-accent", color);
+      applyAccent(color);
     });
     renderContent();
+    panelReturnFocus = document.activeElement;
+    panel.querySelector(".vynyl-search input").focus();
   };
 
   const closePanel = () => {
+    const returnFocus = panelReturnFocus;
     panel?.remove();
     panel = null;
+    panelReturnFocus = null;
+    returnFocus?.focus();
   };
 
   const goToDestination = (id) => {
@@ -279,6 +348,13 @@
     }
     if (event.target.closest(".vynyl-close")) {
       closePanel();
+      return;
+    }
+    if (event.target.closest("[data-action='restore-theme']")) {
+      restoreTheme();
+      refreshEffects();
+      renderContent();
+      showToast("Spotify's original look restored");
       return;
     }
     const themeButton = event.target.closest("[data-theme]");
@@ -316,34 +392,42 @@
       }
       try {
         const url = new URL(value);
-        if (url.protocol !== "https:") throw new Error();
+        if (url.protocol !== "https:") throw new Error("Use an HTTPS image link.");
         localStorage.setItem("vynyl:wallpaper", url.href);
         applyWallpaper();
         showToast("Background saved");
-      } catch {
-        showToast("Enter a valid HTTPS image link.");
+      } catch (error) {
+        showToast(error.message || "Enter a valid HTTPS image link.");
       }
     }
   };
 
   const addSidebarButton = () => {
-    const sidebar = document.querySelector('[data-testid="left-sidebar"] nav, .Root__nav-bar, nav[aria-label="Main"], [data-testid="left-sidebar"]');
-    if (!sidebar || sidebar.querySelector(".vynyl-sidebar-button")) return;
+    if (document.querySelector(".vynyl-sidebar-button")) return true;
+    const footer = document.querySelector('[data-testid="left-sidebar-footer"]');
+    const legalLinks = document.querySelector('[data-testid="left-sidebar-legal-links"]');
+    const sidebar = document.querySelector('[data-testid="left-sidebar"] nav, .Root__nav-bar, nav[aria-label="Main"], [data-testid="left-sidebar"]')
+      || footer?.parentElement
+      || legalLinks?.parentElement?.parentElement;
+    if (!sidebar) return false;
     const button = document.createElement("button");
     button.className = "vynyl-sidebar-button";
     button.type = "button";
+    button.setAttribute("aria-label", "Open Vynyl");
     button.innerHTML = '<span class="vynyl-sidebar-icon">V</span><span>Vynyl</span>';
     button.addEventListener("click", openPanel);
-    sidebar.appendChild(button);
+    if (footer?.parentElement === sidebar) sidebar.insertBefore(button, footer);
+    else sidebar.appendChild(button);
+    return true;
   };
 
-  document.addEventListener("click", (event) => {
-    if (event.target.closest(".vynyl-sidebar-button")) openPanel();
-  });
-
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && panel) {
+      closePanel();
+      return;
+    }
     if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey || panel) return;
-    if (event.target instanceof HTMLElement && /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+    if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable='true']")) return;
     if (!readList("extensions").includes("shortcuts")) return;
     const selector = {
       KeyP: '[data-testid="control-button-playpause"]',
@@ -369,13 +453,27 @@
       }
     }
     if (root.classList.contains("vynyl-ambient")) updateArtwork();
-    addSidebarButton();
   }, 1800);
 
-  const observer = new MutationObserver(addSidebarButton);
+  let enhancementTimer;
+  const observer = new MutationObserver(() => {
+    clearTimeout(enhancementTimer);
+    enhancementTimer = setTimeout(() => {
+      addSidebarButton();
+      if (root.classList.contains("vynyl-ad-shield")) markSponsoredContent();
+    }, 160);
+  });
   observer.observe(document.body, { childList: true, subtree: true });
+  addSidebarButton();
+  markSponsoredContent();
 
-  const selectedTheme = themes.find((theme) => theme.id === localStorage.getItem("vynyl:theme")) || themes[0];
-  applyTheme(selectedTheme);
+  const selectedTheme = themes.find((theme) => theme.id === localStorage.getItem("vynyl:theme"));
+  if (selectedTheme) applyTheme(selectedTheme);
+  else {
+    localStorage.removeItem("vynyl:theme");
+    delete root.dataset.vynylMotion;
+    delete root.dataset.vynylGlass;
+  }
   refreshEffects();
+  window.__vynylStarted = true;
 })();

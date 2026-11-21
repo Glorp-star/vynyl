@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawnSync } = require('child_process');
@@ -13,7 +13,7 @@ function createWindow() {
     minHeight: 620,
     frame: false,
     titleBarStyle: 'hidden',
-    backgroundColor: '#11120f',
+    backgroundColor: '#121119',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -31,6 +31,7 @@ ipcMain.handle('window:maximize', () => {
   mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
 });
 ipcMain.handle('window:close', () => mainWindow?.close());
+ipcMain.handle('external:open-repository', () => shell.openExternal('https://github.com/Glorp-star/vynyl'));
 
 function spotifyAppsFolders() {
   const roaming = process.env.APPDATA || app.getPath('appData');
