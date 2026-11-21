@@ -1,31 +1,43 @@
 # Vynyl
 
-Vynyl is a Spicetify Custom App for changing Spotify's colors and enabling small
-in-client enhancements. It includes animated colorways, a liquid-glass look,
-custom HTTPS image backgrounds, player shortcuts, track-change toasts, and
-small CSS snippets.
+Vynyl is an independent Spotify desktop customization app. It adds a Vynyl
+button to Spotify's sidebar and opens a built-in catalog for themes, animated
+backgrounds, snippets, playback helpers, and Spotify shortcuts.
+
+Vynyl patches only Spotify's local UI entry point and adds its own two assets.
+It does not require or run another customization tool. Spotify updates can
+replace those local changes; rerun the installer if that happens.
 
 ## Install from PowerShell
 
-With Spicetify CLI already installed, run:
+Close Spotify, then run:
 
 ```powershell
 iwr -useb https://raw.githubusercontent.com/Glorp-star/vynyl/main/install.ps1 | iex
 ```
 
-Restart Spotify after the installer finishes. Open **Vynyl** from Spotify's
-sidebar. Extension and snippet switches take effect immediately; theme and
-background choices are saved on this device.
+Restart Spotify and click **Vynyl** in the sidebar.
 
-## Run the desktop installer in development
+## Uninstall
+
+Close Spotify, then run:
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/Glorp-star/vynyl/main/uninstall.ps1 | iex
+```
+
+The uninstaller removes only Vynyl's entry-point tags and files. It leaves
+Spotify and other customizations in place.
+
+## Run in development
 
 ```powershell
 npm install
 npm run dev
 ```
 
-The desktop installer copies the app into `%appdata%\spicetify\CustomApps\vynyl`,
-enables it with the Spicetify CLI, and applies the configuration.
+The desktop installer can also add or remove Vynyl from Spotify without
+downloading another customization framework.
 
 ## Build
 
@@ -33,6 +45,3 @@ enables it with the Spicetify CLI, and applies the configuration.
 npm run build
 npm run dist
 ```
-
-Vynyl's feature scripts are included with the app and do not download or execute
-third-party extension code.

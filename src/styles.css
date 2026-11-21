@@ -153,15 +153,21 @@ button { color: inherit; cursor: pointer; }
 .progress { height: 3px; border-radius: 3px; background: rgba(255,255,255,.12); }
 .progress span { display: block; width: 42%; height: 100%; background: var(--preview-accent); border-radius: 3px; }
 
-.apply-panel { margin-top: auto; padding-top: 14px; display: grid; grid-template-columns: 1fr 142px; align-items: center; }
+.apply-panel { margin-top: auto; padding-top: 14px; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
 .apply-panel p { margin: 0 0 3px; color: #7e8277; font-size: 10px; }
 .apply-panel strong { font-size: 13px; }
+.setup-actions { display: flex; flex-direction: column; gap: 7px; }
 .apply {
-  height: 42px; border: 0; border-radius: 6px; background: #ffb38a;
+  min-width: 142px; height: 42px; border: 0; border-radius: 6px; background: #ffb38a;
   color: #171512; font-weight: 700; font-size: 12px;
 }
 .apply:hover { background: #ffd0b4; }
 .apply:disabled { cursor: not-allowed; opacity: .48; }
+.remove-vynyl {
+  height: 30px; border: 1px solid #34372f; border-radius: 5px;
+  background: transparent; color: #a4a79e; font-size: 10px;
+}
+.remove-vynyl:hover { border-color: #b94f43; color: #fff; }
 .connection { height: 32px; display: flex; align-items: flex-end; gap: 7px; color: #777b70; font-size: 10px; }
 .connection span { width: 6px; height: 6px; margin-bottom: 2px; border-radius: 50%; background: #777b70; }
 .connection.connected span { background: #9fc875; }

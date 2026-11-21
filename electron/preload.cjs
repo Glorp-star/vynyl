@@ -1,10 +1,10 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('vynyl', {
-  detectSpicetify: () => ipcRenderer.invoke('spicetify:detect'),
-  installCustomApp: () => ipcRenderer.invoke('spicetify:install'),
+  detectSpotify: () => ipcRenderer.invoke('spotify:detect'),
+  installToSpotify: () => ipcRenderer.invoke('spotify:install'),
+  uninstallFromSpotify: () => ipcRenderer.invoke('spotify:uninstall'),
   minimize: () => ipcRenderer.invoke('window:minimize'),
   maximize: () => ipcRenderer.invoke('window:maximize'),
   close: () => ipcRenderer.invoke('window:close'),
-  openSpicetifyDocs: () => ipcRenderer.invoke('app:open-spicetify-docs')
 });

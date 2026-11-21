@@ -48,8 +48,8 @@ const albums = [
 
 function App() {
   const [selectedId, setSelectedId] = useState('peach');
-  const [status, setStatus] = useState('Checking for Spicetify...');
-  const [spicetify, setSpicetify] = useState(null);
+  const [status, setStatus] = useState('Checking for Spotify...');
+  const [spotify, setSpotify] = useState(null);
   const [installing, setInstalling] = useState(false);
   const [toast, setToast] = useState('');
   const [search, setSearch] = useState('');
@@ -57,15 +57,15 @@ function App() {
 
   useEffect(() => {
     if (!window.vynyl) {
-      setSpicetify({ found: false, installed: false });
+      setSpotify({ found: false, installed: false });
       setStatus('Open the Vynyl desktop app to install');
       return;
     }
-    window.vynyl.detectSpicetify().then((result) => {
-      setSpicetify(result);
+    window.vynyl.detectSpotify().then((result) => {
+      setSpotify(result);
       setStatus(result.found
-        ? (result.installed ? 'Vynyl is installed' : 'Spicetify is ready')
-        : 'Spicetify CLI not found');
+        ? (result.installed ? 'Vynyl is installed' : 'Spotify is ready')
+        : 'Spotify desktop not found');
     });
   }, []);
 
@@ -77,15 +77,30 @@ function App() {
   const install = async () => {
     setInstalling(true);
     setStatus('Adding Vynyl to Spotify...');
-    const result = await window.vynyl?.installCustomApp();
+    const result = await window.vynyl?.installToSpotify();
     setInstalling(false);
     if (result?.ok) {
-      setSpicetify((current) => ({ ...current, installed: true }));
+      setSpotify((current) => ({ ...current, installed: true }));
       setStatus('Added — restart Spotify to see it');
       notify('Vynyl added. Restart Spotify to open it from the sidebar.');
     } else {
       setStatus(result?.error || 'Could not add Vynyl');
       notify(result?.error || 'Could not add Vynyl');
+    }
+  };
+
+  const uninstall = async () => {
+    setInstalling(true);
+    setStatus('Removing Vynyl from Spotify...');
+    const result = await window.vynyl?.uninstallFromSpotify();
+    setInstalling(false);
+    if (result?.ok) {
+      setSpotify((current) => ({ ...current, installed: false }));
+      setStatus('Removed — restart Spotify to finish');
+      notify('Vynyl removed from Spotify. Restart to finish.');
+    } else {
+      setStatus(result?.error || 'Could not remove Vynyl');
+      notify(result?.error || 'Could not remove Vynyl');
     }
   };
 
@@ -127,9 +142,9 @@ function App() {
               <div>
                 <p className="eyebrow">A Spotify sidebar app</p>
                 <h1>Your Spotify, your way.</h1>
-                <p className="intro-copy">Add Vynyl to Spotify, then switch looks without leaving your music.</p>
+                <p className="intro-copy">Add a custom Vynyl section to Spotify. No extra customization framework needed.</p>
               </div>
-              <span className="product-tag"><Disc3 size={15} />Powered by Spicetify</span>
+              <span className="product-tag"><Disc3 size={15} />Spotify desktop</span>
             </div>
 
             <div className="theme-grid">
@@ -199,17 +214,20 @@ function App() {
                 <p>After setup</p>
                 <strong>Vynyl in your sidebar</strong>
               </div>
-              <button className="apply" onClick={install} disabled={installing || !spicetify?.found}>
-                {installing ? 'Installing…' : spicetify?.installed ? 'Install again' : 'Add to Spotify'}
-              </button>
+              <div className="setup-actions">
+                <button className="apply" onClick={install} disabled={installing || !spotify?.found}>
+                  {installing ? 'Working…' : spotify?.installed ? 'Update Vynyl' : 'Add to Spotify'}
+                </button>
+                {spotify?.installed && <button className="remove-vynyl" onClick={uninstall} disabled={installing}>Remove</button>}
+              </div>
             </div>
-            <div className={`connection ${spicetify?.found ? 'connected' : ''}`}>
+            <div className={`connection ${spotify?.found ? 'connected' : ''}`}>
               <span />
               <p>{status}</p>
             </div>
-            {status === 'Spicetify CLI not found' && (
+            {status === 'Spotify desktop not found' && (
               <p className="install-hint">
-                Install <button onClick={() => window.vynyl?.openSpicetifyDocs()}>Spicetify CLI</button> first, then reopen Vynyl.
+                Install Spotify desktop, close it, then reopen Vynyl.
               </p>
             )}
           </aside>
