@@ -1,0 +1,6 @@
+{
+  "name": "Vynyl",
+  "icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"currentColor\"/></svg>",
+  "active-icon": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"12\" r=\"10\" fill=\"currentColor\"/><circle cx=\"12\" cy=\"12\" r=\"5\" fill=\"none\" stroke=\"var(--spice-main)\" stroke-width=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"1.5\" fill=\"var(--spice-main)\"/></svg>",
+  "subfiles_extension": ["vynyl-runtime.js"]
+}
