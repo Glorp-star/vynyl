@@ -7,6 +7,60 @@ if ($spotifyProcess) {
     throw 'Close Spotify completely, then run the installer again.'
 }
 
+function Expand-ZipArchiveSafely {
+    param([string]$SourcePath, [string]$DestinationPath)
+
+    $destinationRoot = [System.IO.Path]::GetFullPath($DestinationPath)
+    [System.IO.Directory]::CreateDirectory($destinationRoot) | Out-Null
+    $destinationPrefix = $destinationRoot
+    if (-not $destinationPrefix.EndsWith([string][System.IO.Path]::DirectorySeparatorChar) -and
+        -not $destinationPrefix.EndsWith([string][System.IO.Path]::AltDirectorySeparatorChar)) {
+        $destinationPrefix += [System.IO.Path]::DirectorySeparatorChar
+    }
+
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($SourcePath)
+    $seenFiles = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+    try {
+        foreach ($entry in $archive.Entries) {
+            $relativePath = $entry.FullName.Replace('/', '\')
+            if ($relativePath -match '^[\\/]+$') {
+                continue
+            }
+            if ([System.IO.Path]::IsPathRooted($relativePath)) {
+                throw "Spotify archive contains a rooted path: $($entry.FullName)"
+            }
+
+            $targetPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($destinationRoot, $relativePath))
+            if ($targetPath -eq $destinationRoot) {
+                continue
+            }
+            if (-not $targetPath.StartsWith($destinationPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+                throw "Spotify archive contains a path outside its UI directory: $($entry.FullName)"
+            }
+
+            if ($entry.Name -eq '' -or $relativePath.EndsWith('\')) {
+                [System.IO.Directory]::CreateDirectory($targetPath) | Out-Null
+                continue
+            }
+            if (-not $seenFiles.Add($targetPath)) {
+                throw "Spotify archive contains a duplicate path: $($entry.FullName)"
+            }
+
+            [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($targetPath)) | Out-Null
+            $entryStream = $entry.Open()
+            $fileStream = [System.IO.File]::Open($targetPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+            try {
+                $entryStream.CopyTo($fileStream)
+            } finally {
+                $fileStream.Dispose()
+                $entryStream.Dispose()
+            }
+        }
+    } finally {
+        $archive.Dispose()
+    }
+}
+
 $roaming = $env:APPDATA
 $local = $env:LOCALAPPDATA
 $appsCandidates = @(
@@ -40,7 +94,7 @@ try {
         Add-Type -AssemblyName System.IO.Compression.FileSystem
         $uiDir = Join-Path $tempRoot 'xpui'
         New-Item -ItemType Directory -Path $uiDir -Force | Out-Null
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($archivePath, $uiDir)
+        Expand-ZipArchiveSafely -SourcePath $archivePath -DestinationPath $uiDir
     }
 
     $assetDir = Join-Path $uiDir 'vynyl'

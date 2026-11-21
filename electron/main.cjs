@@ -68,6 +68,43 @@ function quotePowerShell(value) {
   return "'" + value.replace(/'/g, "''") + "'";
 }
 
+function createArchiveExtractionCommand(archivePath, destinationPath) {
+  return String.raw`
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$destinationRoot = ${quotePowerShell(destinationPath)}
+$destinationRoot = [System.IO.Path]::GetFullPath($destinationRoot)
+[System.IO.Directory]::CreateDirectory($destinationRoot) | Out-Null
+$destinationPrefix = $destinationRoot
+if (-not $destinationPrefix.EndsWith([string][System.IO.Path]::DirectorySeparatorChar) -and -not $destinationPrefix.EndsWith([string][System.IO.Path]::AltDirectorySeparatorChar)) {
+  $destinationPrefix += [System.IO.Path]::DirectorySeparatorChar
+}
+$archive = [System.IO.Compression.ZipFile]::OpenRead(${quotePowerShell(archivePath)})
+$seenFiles = New-Object 'System.Collections.Generic.HashSet[string]' ([System.StringComparer]::OrdinalIgnoreCase)
+try {
+  foreach ($entry in $archive.Entries) {
+    $relativePath = $entry.FullName.Replace('/', '\')
+    if ($relativePath -match '^[\\/]+$') { continue }
+    if ([System.IO.Path]::IsPathRooted($relativePath)) { throw "Spotify archive contains a rooted path: $($entry.FullName)" }
+    $targetPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($destinationRoot, $relativePath))
+    if ($targetPath -eq $destinationRoot) { continue }
+    if (-not $targetPath.StartsWith($destinationPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
+      throw "Spotify archive contains a path outside its UI directory: $($entry.FullName)"
+    }
+    if ($entry.Name -eq '' -or $relativePath.EndsWith('\')) {
+      [System.IO.Directory]::CreateDirectory($targetPath) | Out-Null
+      continue
+    }
+    if (-not $seenFiles.Add($targetPath)) { throw "Spotify archive contains a duplicate path: $($entry.FullName)" }
+    [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($targetPath)) | Out-Null
+    $entryStream = $entry.Open()
+    $fileStream = [System.IO.File]::Open($targetPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)
+    try { $entryStream.CopyTo($fileStream) } finally { $fileStream.Dispose(); $entryStream.Dispose() }
+  }
+} finally {
+  $archive.Dispose()
+}`;
+}
+
 function runArchiveCommand(command) {
   const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command], {
     encoding: 'utf8',
@@ -140,8 +177,7 @@ function updateArchivedUi(archivePath, install) {
   const outputPath = path.join(app.getPath('temp'), 'vynyl-' + Date.now() + '.spa');
   const backupPath = archivePath + '.vynyl-tmp-backup';
   try {
-    const expand = `Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::ExtractToDirectory(${quotePowerShell(archivePath)}, ${quotePowerShell(tempRoot)})`;
-    runArchiveCommand(expand);
+    runArchiveCommand(createArchiveExtractionCommand(archivePath, tempRoot));
     const changed = updateExpandedUi(tempRoot, install);
     if (!changed && !install) return false;
 
