@@ -1,9 +1,11 @@
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
-const { spawnSync } = require('child_process');
+const { execFile, spawn, spawnSync } = require('child_process');
+const { promisify } = require('util');
 
 let mainWindow;
+const execFileAsync = promisify(execFile);
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -63,6 +65,192 @@ function spotifyIsRunning() {
     windowsHide: true
   });
   return result.status === 0 && /Spotify\.exe/i.test(result.stdout);
+}
+
+function findSpicetifyCli() {
+  const candidates = [
+    path.join(process.env.LOCALAPPDATA || '', 'spicetify', 'spicetify.exe'),
+    path.join(app.getPath('home'), 'spicetify-cli', 'spicetify.exe'),
+    ...(process.env.PATH || '').split(path.delimiter).map((directory) => path.join(directory, 'spicetify.exe'))
+  ];
+  const candidate = candidates.find((filePath) => filePath && fs.existsSync(filePath));
+  if (candidate) return candidate;
+
+  const result = spawnSync('where.exe', ['spicetify.exe'], {
+    encoding: 'utf8',
+    windowsHide: true
+  });
+  if (result.status === 0) {
+    const fromPath = result.stdout.split(/\r?\n/).map((line) => line.trim()).find((line) => line && fs.existsSync(line));
+    if (fromPath) return fromPath;
+  }
+  return null;
+}
+
+async function runSpicetify(cliPath, args) {
+  try {
+    const result = await execFileAsync(cliPath, args, {
+      windowsHide: true,
+      timeout: 60000,
+      maxBuffer: 8 * 1024 * 1024
+    });
+    return (result.stdout || '').trim();
+  } catch (error) {
+    throw new Error((error.stderr || error.stdout || error.message || `Spicetify ${args[0]} failed.`).trim());
+  }
+}
+
+async function getSpicetifyUserDataPath(cliPath) {
+  const output = await runSpicetify(cliPath, ['path', 'userdata']);
+  const dataPath = output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).pop();
+  if (!dataPath || !path.isAbsolute(dataPath)) {
+    throw new Error('Spicetify did not return a valid user data folder.');
+  }
+  return dataPath;
+}
+
+async function getSpicetifyState() {
+  const cliPath = findSpicetifyCli();
+  if (!cliPath) return { installed: false, configured: false, marketplaceInstalled: false, vynylInstalled: false };
+
+  let userDataPath;
+  try {
+    userDataPath = await getSpicetifyUserDataPath(cliPath);
+  } catch (error) {
+    return {
+      installed: true,
+      configured: false,
+      marketplaceInstalled: false,
+      vynylInstalled: false,
+      error: error.message
+    };
+  }
+
+  const marketplaceInstalled = fs.existsSync(path.join(userDataPath, 'CustomApps', 'marketplace', 'manifest.json'));
+  let vynylInstalled = false;
+  try {
+    const extensions = await runSpicetify(cliPath, ['config', 'extensions']);
+    vynylInstalled = /\bvynyl\.js\b/i.test(extensions)
+      && fs.existsSync(path.join(userDataPath, 'Extensions', 'vynyl.js'));
+  } catch {
+    return { installed: true, configured: false, marketplaceInstalled, vynylInstalled: false };
+  }
+  return { installed: true, configured: true, marketplaceInstalled, vynylInstalled };
+}
+
+function openSpicetifySetup() {
+  if (spotifyIsRunning()) {
+    return Promise.reject(new Error('Close Spotify completely before setting up Spicetify.'));
+  }
+
+  const setupUrl = 'https://raw.githubusercontent.com/spicetify/marketplace/main/resources/install.ps1';
+  const command = `$ErrorActionPreference = 'Stop'; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; Invoke-WebRequest -UseBasicParsing -Uri '${setupUrl}' | Invoke-Expression`;
+  return new Promise((resolve, reject) => {
+    const child = spawn('powershell.exe', [
+      '-NoProfile',
+      '-ExecutionPolicy', 'Bypass',
+      '-NoExit',
+      '-Command', command
+    ], { stdio: 'ignore', windowsHide: false });
+    child.once('error', reject);
+    child.once('spawn', () => {
+      child.unref();
+      resolve({ ok: true });
+    });
+  });
+}
+
+async function installVynylSpicetifyExtension() {
+  if (spotifyIsRunning()) throw new Error('Close Spotify completely before enabling Vynyl in Spicetify.');
+  const cliPath = findSpicetifyCli();
+  if (!cliPath) throw new Error('Spicetify CLI is not installed. Use the Spicetify setup option first.');
+
+  const userDataPath = await getSpicetifyUserDataPath(cliPath);
+  const sourcePath = path.join(app.getAppPath(), 'dist', 'vynyl-spicetify.js');
+  if (!fs.existsSync(sourcePath)) throw new Error('The Vynyl Spicetify extension is missing. Rebuild Vynyl and try again.');
+
+  const extensionsDir = path.join(userDataPath, 'Extensions');
+  const extensionPath = path.join(extensionsDir, 'vynyl.js');
+  const extensionSource = fs.readFileSync(sourcePath, 'utf8');
+  const originalExtension = fs.existsSync(extensionPath) ? fs.readFileSync(extensionPath) : null;
+  if (originalExtension && !originalExtension.toString('utf8').startsWith('// Vynyl-managed Spicetify extension')) {
+    throw new Error('A different vynyl.js already exists in Spicetify. It was left untouched.');
+  }
+
+  let wasEnabled = false;
+  try {
+    wasEnabled = /\bvynyl\.js\b/i.test(await runSpicetify(cliPath, ['config', 'extensions']));
+  } catch (error) {
+    throw new Error(`Spicetify is installed but not ready yet: ${error.message}`);
+  }
+
+  fs.mkdirSync(extensionsDir, { recursive: true });
+  let addedToConfig = false;
+  try {
+    fs.writeFileSync(extensionPath, extensionSource, 'utf8');
+    if (!wasEnabled) {
+      await runSpicetify(cliPath, ['config', 'extensions', 'vynyl.js']);
+      addedToConfig = true;
+    }
+    await runSpicetify(cliPath, ['apply']);
+    return { ok: true };
+  } catch (error) {
+    const rollbackErrors = [];
+    let canRemoveExtension = true;
+    if (addedToConfig) {
+      try {
+        await runSpicetify(cliPath, ['config', 'extensions', 'vynyl.js-']);
+        await runSpicetify(cliPath, ['apply']);
+      } catch (rollbackError) {
+        canRemoveExtension = false;
+        rollbackErrors.push(rollbackError.message);
+      }
+    }
+    if (originalExtension) fs.writeFileSync(extensionPath, originalExtension);
+    else if (canRemoveExtension && fs.existsSync(extensionPath)) fs.unlinkSync(extensionPath);
+    if (wasEnabled) {
+      try {
+        await runSpicetify(cliPath, ['apply']);
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError.message);
+      }
+    }
+    if (rollbackErrors.length) {
+      throw new Error(`${error.message} Rollback also reported: ${rollbackErrors.join('; ')}`);
+    }
+    throw error;
+  }
+}
+
+async function uninstallVynylSpicetifyExtension() {
+  if (spotifyIsRunning()) throw new Error('Close Spotify completely before removing Vynyl from Spicetify.');
+  const cliPath = findSpicetifyCli();
+  if (!cliPath) throw new Error('Spicetify CLI is not installed.');
+
+  const userDataPath = await getSpicetifyUserDataPath(cliPath);
+  const extensionPath = path.join(userDataPath, 'Extensions', 'vynyl.js');
+  if (fs.existsSync(extensionPath)
+    && !fs.readFileSync(extensionPath, 'utf8').startsWith('// Vynyl-managed Spicetify extension')) {
+    throw new Error('A different vynyl.js exists in Spicetify. It was left untouched.');
+  }
+
+  const extensions = await runSpicetify(cliPath, ['config', 'extensions']);
+  if (/\bvynyl\.js\b/i.test(extensions)) {
+    await runSpicetify(cliPath, ['config', 'extensions', 'vynyl.js-']);
+    try {
+      await runSpicetify(cliPath, ['apply']);
+    } catch (error) {
+      try {
+        await runSpicetify(cliPath, ['config', 'extensions', 'vynyl.js']);
+        await runSpicetify(cliPath, ['apply']);
+      } catch (rollbackError) {
+        throw new Error(`${error.message} Could not restore the previous Spicetify extension setting: ${rollbackError.message}`);
+      }
+      throw error;
+    }
+  }
+  if (fs.existsSync(extensionPath)) fs.unlinkSync(extensionPath);
+  return { ok: true };
 }
 
 function quotePowerShell(value) {
@@ -265,6 +453,10 @@ ipcMain.handle('spotify:detect', async () => {
 });
 ipcMain.handle('spotify:install', async () => updateSpotify(true));
 ipcMain.handle('spotify:uninstall', async () => updateSpotify(false));
+ipcMain.handle('spicetify:detect', async () => getSpicetifyState());
+ipcMain.handle('spicetify:setup', async () => openSpicetifySetup());
+ipcMain.handle('spicetify:install-vynyl', async () => installVynylSpicetifyExtension());
+ipcMain.handle('spicetify:uninstall-vynyl', async () => uninstallVynylSpicetifyExtension());
 
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

@@ -14,6 +14,7 @@ const highlights = [
 
 function App() {
   const [spotify, setSpotify] = useState(null);
+  const [spicetify, setSpicetify] = useState(null);
   const [checking, setChecking] = useState(true);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState('');
@@ -22,16 +23,23 @@ function App() {
   const checkSpotify = async () => {
     if (!window.vynyl) {
       setSpotify({ found: false, installed: false });
+      setSpicetify({ installed: false, configured: false, marketplaceInstalled: false, vynylInstalled: false });
       setChecking(false);
       return;
     }
     setChecking(true);
     setError('');
     try {
-      setSpotify(await window.vynyl.detectSpotify());
+      const [spotifyResult, spicetifyResult] = await Promise.all([
+        window.vynyl.detectSpotify(),
+        window.vynyl.detectSpicetify()
+      ]);
+      setSpotify(spotifyResult);
+      setSpicetify(spicetifyResult);
     } catch (reason) {
       setError(reason?.message || 'Could not check Spotify installation.');
       setSpotify({ found: false, installed: false });
+      setSpicetify({ installed: false, configured: false, marketplaceInstalled: false, vynylInstalled: false });
     } finally {
       setChecking(false);
     }
@@ -73,6 +81,56 @@ function App() {
       setNotice('Vynyl was removed. Restart Spotify to finish.');
     } catch (reason) {
       setError(reason?.message || 'Vynyl could not be removed.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const setupSpicetify = async () => {
+    if (!window.vynyl) return;
+    setWorking(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await window.vynyl.setupSpicetify();
+      if (!result?.ok) throw new Error(result?.error || 'Spicetify setup could not be opened.');
+      setNotice('The official Spicetify setup is open in PowerShell. Follow its prompts, then refresh here.');
+    } catch (reason) {
+      setError(reason?.message || 'Spicetify setup could not be opened.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const installVynylSpicetify = async () => {
+    if (!window.vynyl) return;
+    setWorking(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await window.vynyl.installVynylSpicetify();
+      if (!result?.ok) throw new Error(result?.error || 'Vynyl could not be enabled in Spicetify.');
+      setSpicetify((current) => ({ ...current, vynylInstalled: true }));
+      setNotice('Vynyl is enabled through Spicetify. Restart Spotify to load it.');
+    } catch (reason) {
+      setError(reason?.message || 'Vynyl could not be enabled in Spicetify.');
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const uninstallVynylSpicetify = async () => {
+    if (!window.vynyl) return;
+    setWorking(true);
+    setError('');
+    setNotice('');
+    try {
+      const result = await window.vynyl.uninstallVynylSpicetify();
+      if (!result?.ok) throw new Error(result?.error || 'Vynyl could not be removed from Spicetify.');
+      setSpicetify((current) => ({ ...current, vynylInstalled: false }));
+      setNotice('Vynyl was removed from Spicetify. Other Spicetify extensions were left in place.');
+    } catch (reason) {
+      setError(reason?.message || 'Vynyl could not be removed from Spicetify.');
     } finally {
       setWorking(false);
     }
@@ -218,6 +276,43 @@ function App() {
                 <p className="message helper-message">Install Spotify desktop, close it, then check again.</p>
               )}
 
+              <div className="setup-divider" />
+              <section className="spicetify-integration" aria-label="Spicetify integration">
+                <div className="integration-topline">
+                  <span className="section-kicker">Optional extension support</span>
+                  <span className={`integration-status ${spicetify?.marketplaceInstalled && spicetify?.configured ? 'is-ready' : ''}`}>
+                    {checking
+                      ? 'Checking'
+                      : spicetify?.marketplaceInstalled && spicetify?.configured
+                        ? 'Marketplace ready'
+                        : spicetify?.installed
+                          ? 'Setup needed'
+                          : 'Not set up'}
+                  </span>
+                </div>
+                <h3>Spicetify + Marketplace</h3>
+                <p>Install the official extension ecosystem. Setup runs its installer in PowerShell; afterward, add Vynyl without replacing your other extensions.</p>
+                {!spicetify?.marketplaceInstalled || !spicetify?.configured ? (
+                  <button className="integration-button" onClick={setupSpicetify} disabled={working || checking || !window.vynyl}>
+                    {spicetify?.installed ? 'Finish Spicetify setup' : 'Set up Spicetify + Marketplace'}
+                  </button>
+                ) : (
+                  <button
+                    className={`integration-button ${spicetify.vynylInstalled ? 'is-remove' : ''}`}
+                    onClick={spicetify.vynylInstalled ? uninstallVynylSpicetify : installVynylSpicetify}
+                    disabled={working || checking || !spicetify.configured || !window.vynyl}
+                  >
+                    {working
+                      ? 'Working…'
+                      : spicetify.vynylInstalled
+                        ? 'Remove Vynyl from Spicetify'
+                        : 'Add Vynyl to Spicetify'}
+                  </button>
+                )}
+                {spicetify?.installed && (!spicetify.marketplaceInstalled || !spicetify.configured) && (
+                  <small className="integration-note">The official setup opens in PowerShell. Follow its prompts and refresh when it finishes.</small>
+                )}
+              </section>
               <div className="setup-divider" />
               <span className="section-kicker">Quick setup</span>
               <ol className="setup-steps">

@@ -152,6 +152,18 @@ button:focus-visible, a:focus-visible { outline: 2px solid #b9a9ff; outline-offs
 .success-message { color: #8fe0c8; }
 .helper-message { color: #b8a7ff; }
 .setup-divider { height: 1px; margin: 15px 0 12px; background: rgba(225,219,239,.1); }
+.spicetify-integration { display: grid; gap: 8px; }
+.integration-topline { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.integration-status { color: #a39daf; font-size: 8px; }
+.integration-status.is-ready { color: #8fe0c8; }
+.spicetify-integration h3 { margin: 0; color: #e7e2ee; font-size: 12px; font-weight: 620; }
+.spicetify-integration p { margin: 0 0 2px; color: #9691a2; font-size: 9px; line-height: 1.5; }
+.integration-button { min-height: 34px; padding: 0 10px; border: 1px solid rgba(185,169,255,.3); border-radius: 5px; background: rgba(185,169,255,.09); color: #d3c8ff; font-size: 9px; font-weight: 620; text-align: center; }
+.integration-button:hover:not(:disabled) { border-color: rgba(185,169,255,.65); background: rgba(185,169,255,.16); }
+.integration-button:disabled { cursor: not-allowed; opacity: .48; }
+.integration-button.is-remove { border-color: rgba(255,154,145,.24); color: #ffaaa1; }
+.integration-button.is-remove:hover:not(:disabled) { border-color: rgba(255,154,145,.55); background: rgba(255,154,145,.08); }
+.integration-note { color: #e4c078; font-size: 8px; line-height: 1.4; }
 .setup-steps { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
 .setup-steps li { display: grid; grid-template-columns: 21px minmax(0, 1fr) 14px; align-items: center; gap: 8px; }
 .setup-steps li > span { display: grid; width: 20px; height: 20px; place-items: center; border: 1px solid rgba(224,217,240,.14); border-radius: 50%; color: #b9a8ff; font-size: 9px; }

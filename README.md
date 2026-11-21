@@ -21,15 +21,18 @@ natively for Vynyl; no Spicetify extension code or runtime is loaded. The
 duplicate finder only highlights repeated track links among the currently
 visible playlist rows; it does not edit or remove tracks.
 
-These are native Vynyl features, not imported Spicetify scripts. Spicetify
-extensions that require its private APIs cannot run directly in Vynyl; their
-compatible behavior must be implemented natively. The Sleep Timer's feature
+These features are implemented natively for Vynyl. The desktop app also offers
+an opt-in Spicetify setup that opens the official CLI and Marketplace installer,
+then can register Vynyl as a Spicetify extension. This lets users run the
+official extension ecosystem without copying Spicetify-dependent scripts into
+Vynyl. The setup does not remove existing Spicetify extensions; remove Vynyl
+from the app to unregister only its own extension. The Sleep Timer's feature
 idea comes from [Theblockbuster1's Marketplace extension](https://github.com/Theblockbuster1/spicetify-extensions/tree/main/SleepTimer).
 
-Vynyl patches only Spotify's local UI entry point and adds its own two assets.
-It does not require or run another customization tool. Spotify updates can
-replace those local changes; use **Repair** in the desktop manager or rerun
-the installer if that happens.
+Vynyl can run standalone by patching Spotify's local UI entry point, or as a
+Spicetify-managed extension when you choose that setup in the desktop app.
+Spotify updates can replace local changes; use **Repair** in the desktop
+manager or rerun the installer if that happens.
 
 ## Install from PowerShell
 
