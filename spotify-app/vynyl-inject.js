@@ -57,7 +57,9 @@
     { id: "ad-shield", name: "Ad Shield", note: "Hide sponsored cards and promo panels. Audio ads are unchanged.", category: "Listening", icon: "⛨" },
     { id: "track-toast", name: "Now playing", note: "See a small toast when the track changes.", category: "Listening", icon: "♫" },
     { id: "shortcuts", name: "Playback keys", note: "Alt + Shift + P / N / B for playback.", category: "Controls", icon: "⌘" },
+    { id: "quick-commands", name: "Quick commands", note: "Press Ctrl + K to search Spotify destinations and playback actions.", category: "Controls", icon: "⌕" },
     { id: "focus", name: "Focus mode", note: "Hide the sidebar footer and right panel.", category: "Layout", icon: "◫" },
+    { id: "duplicate-finder", name: "Duplicate finder", note: "Highlight repeated copies among visible tracks.", category: "Library", icon: "⧉" },
     { id: "ambient", name: "Artwork glow", note: "Let the current cover tint the player.", category: "Visuals", icon: "◉" }
   ];
 
@@ -138,8 +140,11 @@
     const activeSnippets = readList("snippets");
     const adShieldEnabled = activeExtensions.includes("ad-shield");
     const adShieldWasEnabled = root.classList.contains("vynyl-ad-shield");
+    const duplicateFinderEnabled = activeExtensions.includes("duplicate-finder");
+    const duplicateFinderWasEnabled = root.classList.contains("vynyl-duplicate-finder");
     root.classList.toggle("vynyl-ad-shield", adShieldEnabled);
     root.classList.toggle("vynyl-focus", activeExtensions.includes("focus"));
+    root.classList.toggle("vynyl-duplicate-finder", duplicateFinderEnabled);
     root.classList.toggle("vynyl-ambient", activeExtensions.includes("ambient"));
     root.classList.toggle("vynyl-round-art", activeSnippets.includes("round-art"));
     root.classList.toggle("vynyl-pill-progress", activeSnippets.includes("pill-progress"));
@@ -147,6 +152,8 @@
     root.classList.toggle("vynyl-soft-cards", activeSnippets.includes("soft-cards"));
     if (adShieldEnabled) markSponsoredContent();
     else if (adShieldWasEnabled) document.querySelectorAll("[data-vynyl-promo-hidden]").forEach((node) => node.removeAttribute("data-vynyl-promo-hidden"));
+    if (duplicateFinderEnabled) markDuplicateTracks();
+    else if (duplicateFinderWasEnabled) clearDuplicateMarkers();
     applyWallpaper();
   };
 
@@ -175,6 +182,27 @@
       }
       if (container && !container.closest(".vynyl-panel")) container.setAttribute("data-vynyl-promo-hidden", "true");
     }
+  };
+
+  const clearDuplicateMarkers = () => {
+    document.querySelectorAll("[data-vynyl-duplicate]").forEach((row) => row.removeAttribute("data-vynyl-duplicate"));
+  };
+
+  const markDuplicateTracks = () => {
+    if (!root.classList.contains("vynyl-duplicate-finder")) return;
+    clearDuplicateMarkers();
+    const rows = [...document.querySelectorAll('[data-testid="tracklist-row"], .main-trackList-trackListRow')]
+      .filter((row) => !row.closest(".vynyl-panel"));
+    const tracks = rows.map((row) => {
+      const href = row.querySelector('a[href*="/track/"]')?.getAttribute("href") || "";
+      const key = href.match(/\/track\/([^/?#]+)/i)?.[1] || "";
+      return { row, key };
+    }).filter((track) => track.key);
+    const counts = new Map();
+    tracks.forEach(({ key }) => counts.set(key, (counts.get(key) || 0) + 1));
+    tracks.forEach(({ row, key }) => {
+      if (counts.get(key) > 1) row.setAttribute("data-vynyl-duplicate", "true");
+    });
   };
 
   const applyWallpaper = () => {
@@ -214,6 +242,10 @@
   let activeTab = "Themes";
   let search = "";
   let panel;
+  let commandBar;
+  let commandBarReturnFocus;
+  let commandSearch = "";
+  let commandSelection = 0;
   let panelReturnFocus;
 
   const renderTheme = (theme, selected) => `
@@ -338,6 +370,112 @@
     }
   };
 
+  const commandActions = [
+    { id: "open-vynyl", label: "Open Vynyl", detail: "Browse themes, extensions, and snippets", keywords: "studio settings" },
+    { id: "open-themes", label: "Browse themes", detail: "Choose a new Spotify look", keywords: "colors glass motion" },
+    { id: "open-extensions", label: "Manage extensions", detail: "Turn Vynyl features on or off", keywords: "addons tools" },
+    { id: "home", label: "Go to Home", detail: "Open your Spotify home page", keywords: "navigate" },
+    { id: "search", label: "Go to Search", detail: "Find music in Spotify", keywords: "navigate" },
+    { id: "liked", label: "Open Liked Songs", detail: "Go to your saved tracks", keywords: "navigate library" },
+    { id: "queue", label: "Open Queue", detail: "See what plays next", keywords: "navigate" },
+    { id: "play-pause", label: "Play or pause", detail: "Toggle playback", keywords: "player" },
+    { id: "next", label: "Play next track", detail: "Skip forward", keywords: "player skip" },
+    { id: "previous", label: "Play previous track", detail: "Skip back", keywords: "player skip" },
+    { id: "ad-shield", label: "Toggle Ad Shield", detail: "Hide or show sponsored panels", keywords: "extension ads" },
+    { id: "focus", label: "Toggle Focus mode", detail: "Hide or show the sidebar footer and right panel", keywords: "extension layout" }
+  ];
+
+  const matchingCommands = () => {
+    const query = commandSearch.trim().toLowerCase();
+    return commandActions.filter((item) => `${item.label} ${item.detail} ${item.keywords}`.toLowerCase().includes(query));
+  };
+
+  const renderCommandResults = () => {
+    if (!commandBar) return;
+    const results = matchingCommands();
+    commandSelection = Math.min(commandSelection, Math.max(0, results.length - 1));
+    const list = commandBar.querySelector(".vynyl-command-results");
+    list.innerHTML = results.length
+      ? results.map((item, index) => `<button id="vynyl-command-option-${item.id}" class="vynyl-command-option${index === commandSelection ? " is-selected" : ""}" data-command="${item.id}" role="option" aria-selected="${index === commandSelection}"><span><strong>${item.label}</strong><small>${item.detail}</small></span><kbd>Enter</kbd></button>`).join("")
+      : '<div class="vynyl-command-empty">No matching commands</div>';
+    const input = commandBar.querySelector(".vynyl-command-search input");
+    if (results.length) input.setAttribute("aria-activedescendant", `vynyl-command-option-${results[commandSelection].id}`);
+    else input.removeAttribute("aria-activedescendant");
+  };
+
+  const closeCommandBar = () => {
+    const returnFocus = commandBarReturnFocus;
+    commandBar?.remove();
+    commandBar = null;
+    commandBarReturnFocus = null;
+    returnFocus?.focus();
+  };
+
+  const openCommandBar = () => {
+    if (commandBar || panel) return;
+    commandSearch = "";
+    commandSelection = 0;
+    commandBar = document.createElement("section");
+    commandBar.className = "vynyl-command-overlay";
+    commandBar.setAttribute("role", "dialog");
+    commandBar.setAttribute("aria-modal", "true");
+    commandBar.setAttribute("aria-label", "Quick commands");
+    commandBar.innerHTML = `
+      <div class="vynyl-command-box">
+        <label class="vynyl-command-search"><span>⌕</span><input type="search" aria-label="Search commands" aria-controls="vynyl-command-results" placeholder="Search destinations and actions"><kbd>Esc</kbd></label>
+        <div class="vynyl-command-results" id="vynyl-command-results" role="listbox" aria-label="Commands"></div>
+        <footer class="vynyl-command-hint"><span><kbd>↑</kbd><kbd>↓</kbd> to move</span><span><kbd>Enter</kbd> to run</span></footer>
+      </div>`;
+    commandBarReturnFocus = document.activeElement;
+    commandBar.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const option = event.target.closest("[data-command]");
+      if (option) runCommand(option.dataset.command);
+      else if (event.target === commandBar) closeCommandBar();
+    });
+    commandBar.querySelector(".vynyl-command-search input").addEventListener("input", (event) => {
+      commandSearch = event.target.value;
+      commandSelection = 0;
+      renderCommandResults();
+    });
+    document.body.appendChild(commandBar);
+    renderCommandResults();
+    commandBar.querySelector(".vynyl-command-search input").focus();
+  };
+
+  const runCommand = (id) => {
+    closeCommandBar();
+    if (id === "open-vynyl" || id === "open-themes" || id === "open-extensions") {
+      activeTab = id === "open-themes" ? "Themes" : id === "open-extensions" ? "Extensions" : activeTab;
+      search = "";
+      openPanel();
+      return;
+    }
+    if (["home", "search", "liked", "queue"].includes(id)) {
+      goToDestination(id);
+      return;
+    }
+    const playbackSelectors = {
+      "play-pause": '[data-testid="control-button-playpause"]',
+      next: '[data-testid="control-button-skip-forward"]',
+      previous: '[data-testid="control-button-skip-back"]'
+    };
+    if (playbackSelectors[id]) {
+      const control = document.querySelector(playbackSelectors[id]);
+      if (control) control.click();
+      else showToast("That playback control is not available in this layout.");
+      return;
+    }
+    const extensionNames = { "ad-shield": "Ad Shield", focus: "Focus mode" };
+    if (extensionNames[id]) {
+      const enabled = !readList("extensions").includes(id);
+      const current = readList("extensions");
+      writeList("extensions", enabled ? current.concat(id) : current.filter((value) => value !== id));
+      refreshEffects();
+      showToast(`${extensionNames[id]} ${enabled ? "enabled" : "disabled"}`);
+    }
+  };
+
   const handlePanelClick = (event) => {
     const tabButton = event.target.closest("[data-tab]");
     if (tabButton) {
@@ -422,8 +560,37 @@
   };
 
   document.addEventListener("keydown", (event) => {
+    if (commandBar) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeCommandBar();
+      } else if (event.code === "ArrowDown" || event.code === "ArrowUp") {
+        const count = matchingCommands().length;
+        if (count) commandSelection = (commandSelection + (event.code === "ArrowDown" ? 1 : count - 1)) % count;
+        renderCommandResults();
+        event.preventDefault();
+        event.stopPropagation();
+      } else if (event.code === "Enter") {
+        const selected = matchingCommands()[commandSelection];
+        if (selected) {
+          event.preventDefault();
+          event.stopPropagation();
+          runCommand(selected.id);
+        }
+      }
+      return;
+    }
     if (event.key === "Escape" && panel) {
       closePanel();
+      return;
+    }
+    if (event.code === "KeyK" && event.ctrlKey && !event.altKey && !event.metaKey && !panel
+      && !(event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable='true']"))
+      && readList("extensions").includes("quick-commands")) {
+      event.preventDefault();
+      event.stopPropagation();
+      openCommandBar();
       return;
     }
     if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey || panel) return;
@@ -461,11 +628,13 @@
     enhancementTimer = setTimeout(() => {
       addSidebarButton();
       if (root.classList.contains("vynyl-ad-shield")) markSponsoredContent();
+      if (root.classList.contains("vynyl-duplicate-finder")) markDuplicateTracks();
     }, 160);
   });
   observer.observe(document.body, { childList: true, subtree: true });
   addSidebarButton();
   markSponsoredContent();
+  markDuplicateTracks();
 
   const selectedTheme = themes.find((theme) => theme.id === localStorage.getItem("vynyl:theme"));
   if (selectedTheme) applyTheme(selectedTheme);
