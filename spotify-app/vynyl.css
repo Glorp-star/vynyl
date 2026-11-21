@@ -354,6 +354,14 @@
 .vynyl-sleep-cancel { border: 1px solid rgba(255,255,255,.16); background: transparent; color: var(--vynyl-text, #fff); }
 .vynyl-sleep-cancel:disabled { cursor: not-allowed; opacity: .45; }
 .vynyl-sleep-status { margin-left: auto; color: var(--vynyl-subtext, #aaa); font-size: 10px; font-variant-numeric: tabular-nums; }
+.vynyl-playlist-filter-controls { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 15px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; background: color-mix(in srgb, var(--vynyl-card, #242424) 55%, transparent); }
+.vynyl-playlist-filter-controls label { display: grid; flex: 1; gap: 6px; color: var(--vynyl-subtext, #aaa); font-size: 10px; }
+.vynyl-playlist-filter-input { width: 100%; max-width: 420px; min-height: 34px; padding: 0 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; outline: 0; background: var(--vynyl-main, #15141c); color: var(--vynyl-text, #fff); font: 11px "SpotifyMixUI", "Helvetica Neue", sans-serif; }
+.vynyl-playlist-filter-input:focus-visible { outline: 2px solid var(--vynyl-accent, #b8a7ff); outline-offset: 2px; }
+.vynyl-playlist-filter-status { color: var(--vynyl-subtext, #aaa); font-size: 10px; }
+.vynyl-copy-track { margin-top: 15px; }
+.vynyl-visible-duration-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 15px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; background: color-mix(in srgb, var(--vynyl-card, #242424) 55%, transparent); }
+.vynyl-visible-duration-status { color: var(--vynyl-subtext, #aaa); font-size: 10px; }
 .vynyl-current-theme { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 16px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.12); border-radius: 5px; background: color-mix(in srgb, var(--vynyl-card, #242424) 52%, transparent); }
 .vynyl-current-theme strong { font-size: 13px; }
 .vynyl-current-theme span { color: var(--vynyl-subtext, #aaa); font-size: 10px; }
@@ -421,6 +429,7 @@ html.vynyl-duplicate-finder [data-vynyl-duplicate="true"] {
   background-color: color-mix(in srgb, var(--vynyl-accent, #b8a7ff) 11%, transparent) !important;
   box-shadow: inset 3px 0 0 var(--vynyl-accent, #b8a7ff);
 }
+html.vynyl-playlist-filter [data-vynyl-filtered="true"] { display: none !important; }
 html.vynyl-round-art [data-testid="cover-art-image"],
 html.vynyl-round-art .cover-art-image img { border-radius: 50% !important; }
 html.vynyl-pill-progress [role="progressbar"],

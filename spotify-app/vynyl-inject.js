@@ -59,8 +59,11 @@
     { id: "shortcuts", name: "Playback keys", note: "Alt + Shift + P / N / B for playback.", category: "Controls", icon: "⌘" },
     { id: "quick-commands", name: "Quick commands", note: "Press Ctrl + K to search Spotify destinations and playback actions.", category: "Controls", icon: "⌕" },
     { id: "focus", name: "Focus mode", note: "Hide the sidebar footer and right panel.", category: "Layout", icon: "◫" },
+    { id: "playlist-filter", name: "Playlist quick filter", note: "Filter visible playlist tracks by title, artist, or album.", category: "Library", icon: "⌕" },
     { id: "duplicate-finder", name: "Duplicate finder", note: "Highlight repeated copies among visible tracks.", category: "Library", icon: "⧉" },
+    { id: "visible-duration", name: "Visible track duration", note: "Estimate the total time of tracks currently shown.", category: "Library", icon: "◷" },
     { id: "sleep-timer", name: "Sleep timer", note: "Pause Spotify after a set listening time.", category: "Listening", icon: "◷" },
+    { id: "copy-track-info", name: "Copy track info", note: "Copy the current track and artist to your clipboard.", category: "Utilities", icon: "▣" },
     { id: "ambient", name: "Artwork glow", note: "Let the current cover tint the player.", category: "Visuals", icon: "◉" }
   ];
 
@@ -75,7 +78,8 @@
     { id: "home", name: "Home", note: "Your mixes, recents and recommendations.", icon: "⌂" },
     { id: "liked", name: "Liked Songs", note: "Jump to the tracks you saved.", icon: "♥" },
     { id: "queue", name: "Queue", note: "See what plays next.", icon: "≡" },
-    { id: "search", name: "Search", note: "Find a track, artist or playlist.", icon: "⌕" }
+    { id: "search", name: "Search", note: "Find a track, artist or playlist.", icon: "⌕" },
+    { id: "history", name: "Recently played", note: "Return to tracks you played recently.", icon: "↶" }
   ];
 
   const root = document.documentElement;
@@ -143,10 +147,13 @@
     const adShieldWasEnabled = root.classList.contains("vynyl-ad-shield");
     const duplicateFinderEnabled = activeExtensions.includes("duplicate-finder");
     const duplicateFinderWasEnabled = root.classList.contains("vynyl-duplicate-finder");
+    const playlistFilterEnabled = activeExtensions.includes("playlist-filter");
+    const playlistFilterWasEnabled = root.classList.contains("vynyl-playlist-filter");
     const sleepTimerEnabled = activeExtensions.includes("sleep-timer");
     const sleepTimerWasEnabled = root.classList.contains("vynyl-sleep-timer");
     root.classList.toggle("vynyl-ad-shield", adShieldEnabled);
     root.classList.toggle("vynyl-focus", activeExtensions.includes("focus"));
+    root.classList.toggle("vynyl-playlist-filter", playlistFilterEnabled);
     root.classList.toggle("vynyl-duplicate-finder", duplicateFinderEnabled);
     root.classList.toggle("vynyl-sleep-timer", sleepTimerEnabled);
     root.classList.toggle("vynyl-ambient", activeExtensions.includes("ambient"));
@@ -158,6 +165,8 @@
     else if (adShieldWasEnabled) document.querySelectorAll("[data-vynyl-promo-hidden]").forEach((node) => node.removeAttribute("data-vynyl-promo-hidden"));
     if (duplicateFinderEnabled) markDuplicateTracks();
     else if (duplicateFinderWasEnabled) clearDuplicateMarkers();
+    if (playlistFilterEnabled) applyPlaylistFilter();
+    else if (playlistFilterWasEnabled) clearPlaylistFilter();
     if (sleepTimerWasEnabled && !sleepTimerEnabled) clearSleepTimer();
     applyWallpaper();
   };
@@ -193,6 +202,36 @@
     document.querySelectorAll("[data-vynyl-duplicate]").forEach((row) => row.removeAttribute("data-vynyl-duplicate"));
   };
 
+  const measureVisibleTrackDuration = () => {
+    const rows = [...document.querySelectorAll('[data-testid="tracklist-row"], .main-trackList-trackListRow')]
+      .filter((row) => !row.closest(".vynyl-panel") && row.getClientRects().length && !row.hasAttribute("data-vynyl-filtered"));
+    let totalSeconds = 0;
+    let measuredRows = 0;
+    for (const row of rows) {
+      const durations = [...row.textContent.matchAll(/(\d{1,2}):([0-5]\d)/g)];
+      const duration = durations[durations.length - 1];
+      if (!duration) continue;
+      totalSeconds += Number(duration[1]) * 60 + Number(duration[2]);
+      measuredRows += 1;
+    }
+    const status = panel?.querySelector(".vynyl-visible-duration-status");
+    if (!rows.length) {
+      if (status) status.textContent = "No visible track rows on this Spotify page";
+      return;
+    }
+    if (!measuredRows) {
+      if (status) status.textContent = "Spotify's visible track durations could not be read";
+      return;
+    }
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    const formatted = hours
+      ? `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+      : `${minutes}:${String(seconds).padStart(2, "0")}`;
+    if (status) status.textContent = `About ${formatted} across ${measuredRows} of ${rows.length} visible tracks`;
+  };
+
   const markDuplicateTracks = () => {
     if (!root.classList.contains("vynyl-duplicate-finder")) return;
     clearDuplicateMarkers();
@@ -208,6 +247,71 @@
     tracks.forEach(({ row, key }) => {
       if (counts.get(key) > 1) row.setAttribute("data-vynyl-duplicate", "true");
     });
+  };
+
+  let playlistFilter = "";
+
+  const clearPlaylistFilter = () => {
+    playlistFilter = "";
+    document.querySelectorAll("[data-vynyl-filtered]").forEach((row) => row.removeAttribute("data-vynyl-filtered"));
+  };
+
+  const applyPlaylistFilter = (query = playlistFilter) => {
+    playlistFilter = query.trim().toLocaleLowerCase();
+    const rows = [...document.querySelectorAll('[data-testid="tracklist-row"], .main-trackList-trackListRow')]
+      .filter((row) => !row.closest(".vynyl-panel"));
+    let matches = 0;
+    for (const row of rows) {
+      const visible = !playlistFilter || row.textContent.toLocaleLowerCase().includes(playlistFilter);
+      if (visible) {
+        matches += 1;
+        row.removeAttribute("data-vynyl-filtered");
+      } else {
+        row.setAttribute("data-vynyl-filtered", "true");
+      }
+    }
+    const status = panel?.querySelector(".vynyl-playlist-filter-status");
+    if (status) {
+      status.textContent = rows.length
+        ? playlistFilter ? `${matches} of ${rows.length} visible tracks match` : `${rows.length} visible tracks`
+        : "No track rows found on this Spotify page";
+    }
+  };
+
+  const copyNowPlaying = async () => {
+    const title = document.querySelector('[data-testid="context-item-info-title"], .main-trackInfo-name')?.textContent?.trim() || "";
+    const artist = document.querySelector('[data-testid="context-item-info-artist"], .main-trackInfo-artists')?.textContent?.trim() || "";
+    if (!title) {
+      showToast("Spotify's current track title is not available.");
+      return;
+    }
+    const text = artist ? `${title} — ${artist}` : title;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+      await navigator.clipboard.writeText(text);
+      showToast("Track info copied.");
+    } catch (error) {
+      const field = document.createElement("textarea");
+      field.value = text;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      let copied = false;
+      try {
+        copied = document.execCommand("copy");
+      } catch (fallbackError) {
+        console.warn("Vynyl's clipboard fallback failed.", fallbackError);
+      } finally {
+        field.remove();
+      }
+      if (copied) showToast("Track info copied.");
+      else {
+        console.warn("Vynyl could not write current track info to the clipboard.", error);
+        showToast("Could not copy track info. Check Spotify's clipboard permissions.");
+      }
+    }
   };
 
   const applyWallpaper = () => {
@@ -348,6 +452,20 @@
         </section>`;
     } else if (activeTab === "Extensions") {
       const filteredExtensions = extensions.filter(matches);
+      const playlistFilterControls = activeExtensions.includes("playlist-filter") && filteredExtensions.some((item) => item.id === "playlist-filter") ? `
+        <section class="vynyl-playlist-filter-controls" aria-label="Playlist filter controls">
+          <label><span>Find in visible tracks</span>
+            <input class="vynyl-playlist-filter-input" type="search" value="${escapeHtml(playlistFilter)}" placeholder="Track, artist, or album" aria-label="Filter visible playlist tracks">
+          </label>
+          <span class="vynyl-playlist-filter-status" role="status"></span>
+        </section>` : "";
+      const copyTrackControls = activeExtensions.includes("copy-track-info") && filteredExtensions.some((item) => item.id === "copy-track-info") ? `
+        <button class="vynyl-small-button vynyl-copy-track" data-action="copy-track">Copy current track info</button>` : "";
+      const durationControls = activeExtensions.includes("visible-duration") && filteredExtensions.some((item) => item.id === "visible-duration") ? `
+        <section class="vynyl-visible-duration-controls" aria-label="Visible track duration">
+          <button class="vynyl-small-button" data-action="measure-duration">Measure visible tracks</button>
+          <span class="vynyl-visible-duration-status" role="status">Only tracks currently rendered on this Spotify page are counted.</span>
+        </section>` : "";
       const sleepTimerControls = activeExtensions.includes("sleep-timer") && filteredExtensions.some((item) => item.id === "sleep-timer") ? `
         <section class="vynyl-sleep-timer-controls" aria-label="Sleep timer controls">
           <label>Pause after
@@ -359,8 +477,9 @@
           <button class="vynyl-small-button vynyl-sleep-cancel" data-action="cancel-sleep-timer" ${sleepTimerDeadline ? "" : "disabled"}>Cancel</button>
           <span class="vynyl-sleep-status" role="status">No timer set</span>
         </section>` : "";
-      content.innerHTML = `<div class="vynyl-section-head"><div><small>Playback, layout, and listening controls</small><h2>Extensions</h2></div><span>${activeExtensions.length} enabled</span></div>${filteredExtensions.length ? `<div class="vynyl-feature-grid">${filteredExtensions.map((item) => renderFeature(item, "extensions", activeExtensions.includes(item.id))).join("")}</div>` : emptyState}${sleepTimerControls}<p class="vynyl-catalog-note">Ad Shield hides sponsored cards and promo panels only. It does not skip audio ads or block network requests.</p>`;
+      content.innerHTML = `<div class="vynyl-section-head"><div><small>Playback, library, and listening tools</small><h2>Extensions</h2></div><span>${activeExtensions.length} enabled</span></div>${filteredExtensions.length ? `<div class="vynyl-feature-grid">${filteredExtensions.map((item) => renderFeature(item, "extensions", activeExtensions.includes(item.id))).join("")}</div>` : emptyState}${playlistFilterControls}${copyTrackControls}${durationControls}${sleepTimerControls}<p class="vynyl-catalog-note">Ad Shield hides sponsored cards and promo panels only. It does not skip audio ads or block network requests. Playlist filters and duration estimates use visible rows only.</p>`;
       updateSleepTimerStatus();
+      applyPlaylistFilter();
     } else if (activeTab === "Snippets") {
       const filteredSnippets = snippets.filter(matches);
       content.innerHTML = `<div class="vynyl-section-head"><div><small>Small changes to the surfaces you use</small><h2>Snippets</h2></div><span>${activeSnippets.length} enabled</span></div>${filteredSnippets.length ? `<div class="vynyl-feature-grid">${filteredSnippets.map((item) => renderFeature(item, "snippets", activeSnippets.includes(item.id))).join("")}</div>` : emptyState}`;
@@ -407,10 +526,13 @@
       renderContent();
     });
     panel.querySelector(".vynyl-content").addEventListener("input", (event) => {
-      if (!event.target.matches(".vynyl-color")) return;
-      const color = event.target.value;
-      localStorage.setItem("vynyl:custom-color", color);
-      applyAccent(color);
+      if (event.target.matches(".vynyl-color")) {
+        const color = event.target.value;
+        localStorage.setItem("vynyl:custom-color", color);
+        applyAccent(color);
+      } else if (event.target.matches(".vynyl-playlist-filter-input")) {
+        applyPlaylistFilter(event.target.value);
+      }
     });
     renderContent();
     panelReturnFocus = document.activeElement;
@@ -430,7 +552,8 @@
       home: 'a[href="/"], a[aria-label="Home"]',
       liked: 'a[href="/collection/tracks"], a[aria-label*="Liked Songs"]',
       queue: '[data-testid="control-button-queue"]',
-      search: 'a[href="/search"], a[aria-label="Search"]'
+      search: 'a[href="/search"], a[aria-label="Search"]',
+      history: 'a[href="/collection/recently-played"], a[aria-label*="Recently played" i]'
     };
     const target = document.querySelector(selectors[id]);
     if (target) {
@@ -445,9 +568,12 @@
     { id: "open-vynyl", label: "Open Vynyl", detail: "Browse themes, extensions, and snippets", keywords: "studio settings" },
     { id: "open-themes", label: "Browse themes", detail: "Choose a new Spotify look", keywords: "colors glass motion" },
     { id: "open-extensions", label: "Manage extensions", detail: "Turn Vynyl features on or off", keywords: "addons tools" },
+    { id: "copy-track", label: "Copy current track", detail: "Copy track title and artist to the clipboard", keywords: "share clipboard", extension: "copy-track-info" },
+    { id: "measure-duration", label: "Measure visible track time", detail: "Estimate the total duration of visible playlist rows", keywords: "queue duration", extension: "visible-duration" },
     { id: "home", label: "Go to Home", detail: "Open your Spotify home page", keywords: "navigate" },
     { id: "search", label: "Go to Search", detail: "Find music in Spotify", keywords: "navigate" },
     { id: "liked", label: "Open Liked Songs", detail: "Go to your saved tracks", keywords: "navigate library" },
+    { id: "history", label: "Open Recently Played", detail: "Return to music you listened to", keywords: "navigate history" },
     { id: "queue", label: "Open Queue", detail: "See what plays next", keywords: "navigate" },
     { id: "play-pause", label: "Play or pause", detail: "Toggle playback", keywords: "player" },
     { id: "next", label: "Play next track", detail: "Skip forward", keywords: "player skip" },
@@ -458,7 +584,8 @@
 
   const matchingCommands = () => {
     const query = commandSearch.trim().toLowerCase();
-    return commandActions.filter((item) => `${item.label} ${item.detail} ${item.keywords}`.toLowerCase().includes(query));
+    return commandActions.filter((item) => (!item.extension || readList("extensions").includes(item.extension))
+      && `${item.label} ${item.detail} ${item.keywords}`.toLowerCase().includes(query));
   };
 
   const renderCommandResults = () => {
@@ -522,7 +649,7 @@
       openPanel();
       return;
     }
-    if (["home", "search", "liked", "queue"].includes(id)) {
+    if (["home", "search", "liked", "queue", "history"].includes(id)) {
       goToDestination(id);
       return;
     }
@@ -535,6 +662,17 @@
       const control = document.querySelector(playbackSelectors[id]);
       if (control) control.click();
       else showToast("That playback control is not available in this layout.");
+      return;
+    }
+    if (id === "copy-track") {
+      copyNowPlaying();
+      return;
+    }
+    if (id === "measure-duration") {
+      activeTab = "Extensions";
+      search = "Visible track duration";
+      openPanel();
+      measureVisibleTrackDuration();
       return;
     }
     const extensionNames = { "ad-shield": "Ad Shield", focus: "Focus mode" };
@@ -571,6 +709,14 @@
       const cancelButton = panel.querySelector("[data-action='cancel-sleep-timer']");
       if (cancelButton) cancelButton.disabled = true;
       showToast("Sleep timer cancelled.");
+      return;
+    }
+    if (event.target.closest("[data-action='copy-track']")) {
+      copyNowPlaying();
+      return;
+    }
+    if (event.target.closest("[data-action='measure-duration']")) {
+      measureVisibleTrackDuration();
       return;
     }
     if (event.target.closest("[data-action='restore-theme']")) {
@@ -714,6 +860,7 @@
       addSidebarButton();
       if (root.classList.contains("vynyl-ad-shield")) markSponsoredContent();
       if (root.classList.contains("vynyl-duplicate-finder")) markDuplicateTracks();
+      if (root.classList.contains("vynyl-playlist-filter")) applyPlaylistFilter();
     }, 160);
   });
   observer.observe(document.body, { childList: true, subtree: true });

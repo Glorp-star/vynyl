@@ -7,10 +7,12 @@ accents and image backgrounds, animated and liquid-glass looks, extensions,
 snippets, and quick links.
 
 The extension catalog includes playback shortcuts, focus mode, artwork glow,
-a time-based Sleep Timer, and a cosmetic Ad Shield that hides sponsored cards
-and promo panels. The Sleep Timer pauses Spotify at the selected time while
-the Spotify client remains open. Ad Shield does not skip audio ads or block
-network requests.
+a time-based Sleep Timer, playlist filtering, visible-track duration
+estimates, current-track copying, and a cosmetic Ad Shield that hides
+sponsored cards and promo panels. The Sleep Timer pauses Spotify at the
+selected time while the Spotify client remains open. Playlist filtering and
+duration estimates only use visible rows. Ad Shield does not skip audio ads or
+block network requests.
 
 Quick commands (`Ctrl+K`) and the read-only Duplicate Finder bring Vynyl
 versions of ideas found in the Marketplace's [Power Bar](https://github.com/jeroentvb/spicetify-power-bar)
@@ -19,9 +21,10 @@ natively for Vynyl; no Spicetify extension code or runtime is loaded. The
 duplicate finder only highlights repeated track links among the currently
 visible playlist rows; it does not edit or remove tracks.
 
-The time-based Sleep Timer is a native Vynyl implementation inspired by
-[Theblockbuster1's Marketplace extension](https://github.com/Theblockbuster1/spicetify-extensions/tree/main/SleepTimer);
-it does not load that extension or require Spicetify.
+These are native Vynyl features, not imported Spicetify scripts. Spicetify
+extensions that require its private APIs cannot run directly in Vynyl; their
+compatible behavior must be implemented natively. The Sleep Timer's feature
+idea comes from [Theblockbuster1's Marketplace extension](https://github.com/Theblockbuster1/spicetify-extensions/tree/main/SleepTimer).
 
 Vynyl patches only Spotify's local UI entry point and adds its own two assets.
 It does not require or run another customization tool. Spotify updates can
