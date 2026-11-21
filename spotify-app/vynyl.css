@@ -348,6 +348,12 @@
 .vynyl-toggle span { width: 16px; height: 16px; display: block; border-radius: 50%; background: #fff; transition: transform 140ms ease; }
 .vynyl-toggle.is-on { background: var(--vynyl-accent, #ffb38a); }
 .vynyl-toggle.is-on span { transform: translateX(15px); background: var(--vynyl-main, #121212); }
+.vynyl-sleep-timer-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 15px; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; background: color-mix(in srgb, var(--vynyl-card, #242424) 55%, transparent); }
+.vynyl-sleep-timer-controls label { display: flex; align-items: center; gap: 8px; color: var(--vynyl-subtext, #aaa); font-size: 11px; }
+.vynyl-sleep-duration { min-height: 33px; padding: 0 25px 0 9px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; background: var(--vynyl-main, #15141c); color: var(--vynyl-text, #fff); font: 11px "SpotifyMixUI", "Helvetica Neue", sans-serif; }
+.vynyl-sleep-cancel { border: 1px solid rgba(255,255,255,.16); background: transparent; color: var(--vynyl-text, #fff); }
+.vynyl-sleep-cancel:disabled { cursor: not-allowed; opacity: .45; }
+.vynyl-sleep-status { margin-left: auto; color: var(--vynyl-subtext, #aaa); font-size: 10px; font-variant-numeric: tabular-nums; }
 .vynyl-current-theme { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 16px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.12); border-radius: 5px; background: color-mix(in srgb, var(--vynyl-card, #242424) 52%, transparent); }
 .vynyl-current-theme strong { font-size: 13px; }
 .vynyl-current-theme span { color: var(--vynyl-subtext, #aaa); font-size: 10px; }

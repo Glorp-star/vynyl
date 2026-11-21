@@ -60,6 +60,7 @@
     { id: "quick-commands", name: "Quick commands", note: "Press Ctrl + K to search Spotify destinations and playback actions.", category: "Controls", icon: "⌕" },
     { id: "focus", name: "Focus mode", note: "Hide the sidebar footer and right panel.", category: "Layout", icon: "◫" },
     { id: "duplicate-finder", name: "Duplicate finder", note: "Highlight repeated copies among visible tracks.", category: "Library", icon: "⧉" },
+    { id: "sleep-timer", name: "Sleep timer", note: "Pause Spotify after a set listening time.", category: "Listening", icon: "◷" },
     { id: "ambient", name: "Artwork glow", note: "Let the current cover tint the player.", category: "Visuals", icon: "◉" }
   ];
 
@@ -142,9 +143,12 @@
     const adShieldWasEnabled = root.classList.contains("vynyl-ad-shield");
     const duplicateFinderEnabled = activeExtensions.includes("duplicate-finder");
     const duplicateFinderWasEnabled = root.classList.contains("vynyl-duplicate-finder");
+    const sleepTimerEnabled = activeExtensions.includes("sleep-timer");
+    const sleepTimerWasEnabled = root.classList.contains("vynyl-sleep-timer");
     root.classList.toggle("vynyl-ad-shield", adShieldEnabled);
     root.classList.toggle("vynyl-focus", activeExtensions.includes("focus"));
     root.classList.toggle("vynyl-duplicate-finder", duplicateFinderEnabled);
+    root.classList.toggle("vynyl-sleep-timer", sleepTimerEnabled);
     root.classList.toggle("vynyl-ambient", activeExtensions.includes("ambient"));
     root.classList.toggle("vynyl-round-art", activeSnippets.includes("round-art"));
     root.classList.toggle("vynyl-pill-progress", activeSnippets.includes("pill-progress"));
@@ -154,6 +158,7 @@
     else if (adShieldWasEnabled) document.querySelectorAll("[data-vynyl-promo-hidden]").forEach((node) => node.removeAttribute("data-vynyl-promo-hidden"));
     if (duplicateFinderEnabled) markDuplicateTracks();
     else if (duplicateFinderWasEnabled) clearDuplicateMarkers();
+    if (sleepTimerWasEnabled && !sleepTimerEnabled) clearSleepTimer();
     applyWallpaper();
   };
 
@@ -247,6 +252,60 @@
   let commandSearch = "";
   let commandSelection = 0;
   let panelReturnFocus;
+  let sleepTimerDeadline = 0;
+  let sleepTimerTimeout = 0;
+  let sleepTimerInterval = 0;
+
+  const updateSleepTimerStatus = () => {
+    const status = panel?.querySelector(".vynyl-sleep-status");
+    if (!status) return;
+    const cancelButton = panel.querySelector("[data-action='cancel-sleep-timer']");
+    if (cancelButton) cancelButton.disabled = !sleepTimerDeadline;
+    if (!sleepTimerDeadline) {
+      status.textContent = "No timer set";
+      return;
+    }
+    const seconds = Math.max(0, Math.ceil((sleepTimerDeadline - Date.now()) / 1000));
+    status.textContent = `Pauses in ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+  };
+
+  const clearSleepTimer = () => {
+    clearTimeout(sleepTimerTimeout);
+    clearInterval(sleepTimerInterval);
+    sleepTimerTimeout = 0;
+    sleepTimerInterval = 0;
+    sleepTimerDeadline = 0;
+    updateSleepTimerStatus();
+  };
+
+  const startSleepTimer = (minutes) => {
+    if (![5, 10, 15, 30, 45, 60, 90].includes(minutes)) {
+      showToast("Choose a supported sleep timer duration.");
+      return;
+    }
+    clearSleepTimer();
+    sleepTimerDeadline = Date.now() + minutes * 60 * 1000;
+    sleepTimerTimeout = setTimeout(() => {
+      sleepTimerTimeout = 0;
+      clearInterval(sleepTimerInterval);
+      sleepTimerInterval = 0;
+      sleepTimerDeadline = 0;
+      updateSleepTimerStatus();
+      const playButton = document.querySelector('[data-testid="control-button-playpause"]');
+      const label = `${playButton?.getAttribute("aria-label") || ""} ${playButton?.getAttribute("title") || ""}`.trim();
+      if (playButton && /\bpause\b/i.test(label) && !/\bplay\b/i.test(label)) {
+        playButton.click();
+        showToast("Sleep timer ended; playback paused.");
+      } else if (/\bplay\b/i.test(label)) {
+        showToast("Sleep timer ended; Spotify was already paused.");
+      } else {
+        showToast("Sleep timer ended, but Spotify playback state could not be checked.");
+      }
+    }, minutes * 60 * 1000);
+    sleepTimerInterval = setInterval(updateSleepTimerStatus, 1000);
+    updateSleepTimerStatus();
+    showToast(`Sleep timer set for ${minutes} minutes.`);
+  };
 
   const renderTheme = (theme, selected) => `
     <button class="vynyl-theme-card${selected ? " is-selected" : ""}" data-theme="${theme.id}" aria-pressed="${selected}">
@@ -289,7 +348,19 @@
         </section>`;
     } else if (activeTab === "Extensions") {
       const filteredExtensions = extensions.filter(matches);
-      content.innerHTML = `<div class="vynyl-section-head"><div><small>Playback, layout, and listening controls</small><h2>Extensions</h2></div><span>${activeExtensions.length} enabled</span></div>${filteredExtensions.length ? `<div class="vynyl-feature-grid">${filteredExtensions.map((item) => renderFeature(item, "extensions", activeExtensions.includes(item.id))).join("")}</div>` : emptyState}<p class="vynyl-catalog-note">Ad Shield hides sponsored cards and promo panels only. It does not skip audio ads or block network requests.</p>`;
+      const sleepTimerControls = activeExtensions.includes("sleep-timer") && filteredExtensions.some((item) => item.id === "sleep-timer") ? `
+        <section class="vynyl-sleep-timer-controls" aria-label="Sleep timer controls">
+          <label>Pause after
+            <select class="vynyl-sleep-duration" aria-label="Sleep timer duration">
+              ${[5, 10, 15, 30, 45, 60, 90].map((minutes) => `<option value="${minutes}">${minutes} minutes</option>`).join("")}
+            </select>
+          </label>
+          <button class="vynyl-small-button" data-action="start-sleep-timer">Start timer</button>
+          <button class="vynyl-small-button vynyl-sleep-cancel" data-action="cancel-sleep-timer" ${sleepTimerDeadline ? "" : "disabled"}>Cancel</button>
+          <span class="vynyl-sleep-status" role="status">No timer set</span>
+        </section>` : "";
+      content.innerHTML = `<div class="vynyl-section-head"><div><small>Playback, layout, and listening controls</small><h2>Extensions</h2></div><span>${activeExtensions.length} enabled</span></div>${filteredExtensions.length ? `<div class="vynyl-feature-grid">${filteredExtensions.map((item) => renderFeature(item, "extensions", activeExtensions.includes(item.id))).join("")}</div>` : emptyState}${sleepTimerControls}<p class="vynyl-catalog-note">Ad Shield hides sponsored cards and promo panels only. It does not skip audio ads or block network requests.</p>`;
+      updateSleepTimerStatus();
     } else if (activeTab === "Snippets") {
       const filteredSnippets = snippets.filter(matches);
       content.innerHTML = `<div class="vynyl-section-head"><div><small>Small changes to the surfaces you use</small><h2>Snippets</h2></div><span>${activeSnippets.length} enabled</span></div>${filteredSnippets.length ? `<div class="vynyl-feature-grid">${filteredSnippets.map((item) => renderFeature(item, "snippets", activeSnippets.includes(item.id))).join("")}</div>` : emptyState}`;
@@ -486,6 +557,20 @@
     }
     if (event.target.closest(".vynyl-close")) {
       closePanel();
+      return;
+    }
+    if (event.target.closest("[data-action='start-sleep-timer']")) {
+      const duration = Number(panel.querySelector(".vynyl-sleep-duration").value);
+      startSleepTimer(duration);
+      const cancelButton = panel.querySelector("[data-action='cancel-sleep-timer']");
+      if (cancelButton) cancelButton.disabled = false;
+      return;
+    }
+    if (event.target.closest("[data-action='cancel-sleep-timer']")) {
+      clearSleepTimer();
+      const cancelButton = panel.querySelector("[data-action='cancel-sleep-timer']");
+      if (cancelButton) cancelButton.disabled = true;
+      showToast("Sleep timer cancelled.");
       return;
     }
     if (event.target.closest("[data-action='restore-theme']")) {
