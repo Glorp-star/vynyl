@@ -61,6 +61,45 @@ function Expand-ZipArchiveSafely {
     }
 }
 
+function Compress-ZipDirectory {
+    param([string]$SourceDirectory, [string]$DestinationPath)
+
+    $sourceRoot = [System.IO.Path]::GetFullPath($SourceDirectory)
+    $sourcePrefix = $sourceRoot
+    if (-not $sourcePrefix.EndsWith([string][System.IO.Path]::DirectorySeparatorChar) -and
+        -not $sourcePrefix.EndsWith([string][System.IO.Path]::AltDirectorySeparatorChar)) {
+        $sourcePrefix += [System.IO.Path]::DirectorySeparatorChar
+    }
+
+    $outputStream = [System.IO.File]::Open($DestinationPath, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+    $archive = $null
+    try {
+        $archive = [System.IO.Compression.ZipArchive]::new($outputStream, [System.IO.Compression.ZipArchiveMode]::Create, $false)
+        $archive.CreateEntry('/') | Out-Null
+        foreach ($directory in Get-ChildItem -LiteralPath $sourceRoot -Directory -Force -Recurse) {
+            $entryName = $directory.FullName.Substring($sourcePrefix.Length).Replace('\', '/') + '/'
+            $archive.CreateEntry($entryName) | Out-Null
+        }
+        foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -File -Force -Recurse) {
+            $entryName = $file.FullName.Substring($sourcePrefix.Length).Replace('\', '/')
+            $entry = $archive.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+            $inputStream = [System.IO.File]::OpenRead($file.FullName)
+            $entryStream = $entry.Open()
+            try {
+                $inputStream.CopyTo($entryStream)
+            } finally {
+                $entryStream.Dispose()
+                $inputStream.Dispose()
+            }
+        }
+    } finally {
+        if ($archive) {
+            $archive.Dispose()
+        }
+        $outputStream.Dispose()
+    }
+}
+
 $roaming = $env:APPDATA
 $local = $env:LOCALAPPDATA
 $appsCandidates = @(
@@ -117,7 +156,7 @@ try {
     [System.IO.File]::WriteAllText($indexPath, $html, (New-Object System.Text.UTF8Encoding($false)))
 
     if ($archivePath) {
-        [System.IO.Compression.ZipFile]::CreateFromDirectory($uiDir, $repackedPath, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        Compress-ZipDirectory -SourceDirectory $uiDir -DestinationPath $repackedPath
         $temporaryBackup = $archivePath + '.vynyl-tmp-backup'
         Copy-Item -LiteralPath $archivePath -Destination $temporaryBackup -Force
         try {

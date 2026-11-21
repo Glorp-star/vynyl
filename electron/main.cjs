@@ -105,6 +105,36 @@ try {
 }`;
 }
 
+function createArchiveCompressionCommand(sourcePath, archivePath) {
+  return String.raw`
+Add-Type -AssemblyName System.IO.Compression
+$sourceRoot = [System.IO.Path]::GetFullPath(${quotePowerShell(sourcePath)})
+$sourcePrefix = $sourceRoot
+if (-not $sourcePrefix.EndsWith([string][System.IO.Path]::DirectorySeparatorChar) -and -not $sourcePrefix.EndsWith([string][System.IO.Path]::AltDirectorySeparatorChar)) {
+  $sourcePrefix += [System.IO.Path]::DirectorySeparatorChar
+}
+$outputStream = [System.IO.File]::Open(${quotePowerShell(archivePath)}, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+$zip = $null
+try {
+  $zip = [System.IO.Compression.ZipArchive]::new($outputStream, [System.IO.Compression.ZipArchiveMode]::Create, $false)
+  $zip.CreateEntry('/') | Out-Null
+  foreach ($directory in Get-ChildItem -LiteralPath $sourceRoot -Directory -Force -Recurse) {
+    $entryName = $directory.FullName.Substring($sourcePrefix.Length).Replace('\', '/') + '/'
+    $zip.CreateEntry($entryName) | Out-Null
+  }
+  foreach ($file in Get-ChildItem -LiteralPath $sourceRoot -File -Force -Recurse) {
+    $entryName = $file.FullName.Substring($sourcePrefix.Length).Replace('\', '/')
+    $entry = $zip.CreateEntry($entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+    $inputStream = [System.IO.File]::OpenRead($file.FullName)
+    $entryStream = $entry.Open()
+    try { $inputStream.CopyTo($entryStream) } finally { $entryStream.Dispose(); $inputStream.Dispose() }
+  }
+} finally {
+  if ($zip) { $zip.Dispose() }
+  $outputStream.Dispose()
+}`;
+}
+
 function runArchiveCommand(command) {
   const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', command], {
     encoding: 'utf8',
@@ -181,8 +211,7 @@ function updateArchivedUi(archivePath, install) {
     const changed = updateExpandedUi(tempRoot, install);
     if (!changed && !install) return false;
 
-    const compress = `Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory(${quotePowerShell(tempRoot)}, ${quotePowerShell(outputPath)}, [System.IO.Compression.CompressionLevel]::Optimal, $false)`;
-    runArchiveCommand(compress);
+    runArchiveCommand(createArchiveCompressionCommand(tempRoot, outputPath));
 
     fs.copyFileSync(archivePath, backupPath);
     try {
